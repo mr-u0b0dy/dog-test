@@ -25,6 +25,7 @@ class OpenOcdFlashBackend(FlashBackend):
             "-c",
             f"program {firmware_path} verify reset exit",
         ]
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            raise RuntimeError("OpenOCD flash failed")
+            detail = result.stderr.decode(errors="replace").strip() or result.stdout.decode(errors="replace").strip()
+            raise RuntimeError(f"OpenOCD flash failed (exit {result.returncode}): {detail}")

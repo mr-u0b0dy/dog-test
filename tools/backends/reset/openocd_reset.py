@@ -24,9 +24,10 @@ class OpenOcdResetBackend(ResetBackend):
             "-c",
             f"init; {command}; shutdown",
         ]
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            raise RuntimeError(f"OpenOCD reset command failed: {command}")
+            detail = result.stderr.decode(errors="replace").strip() or result.stdout.decode(errors="replace").strip()
+            raise RuntimeError(f"OpenOCD reset command failed: {command} (exit {result.returncode}): {detail}")
 
     def soft_reset(self) -> None:
         self._run("reset run")

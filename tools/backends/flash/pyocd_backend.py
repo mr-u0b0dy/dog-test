@@ -15,6 +15,7 @@ class PyOcdFlashBackend(FlashBackend):
         cmd = ["pyocd", "flash", str(firmware_path)]
         if self.board_id:
             cmd.extend(["-u", self.board_id])
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            raise RuntimeError("pyOCD flash failed")
+            detail = result.stderr.decode(errors="replace").strip() or result.stdout.decode(errors="replace").strip()
+            raise RuntimeError(f"pyOCD flash failed (exit {result.returncode}): {detail}")

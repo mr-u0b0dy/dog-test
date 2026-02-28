@@ -14,9 +14,10 @@ class PyOcdResetBackend(ResetBackend):
         cmd = ["pyocd", "cmd", "-c", command]
         if self.board_id:
             cmd.extend(["-u", self.board_id])
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, capture_output=True)
         if result.returncode != 0:
-            raise RuntimeError(f"pyOCD reset command failed: {command}")
+            detail = result.stderr.decode(errors="replace").strip() or result.stdout.decode(errors="replace").strip()
+            raise RuntimeError(f"pyOCD reset command failed: {command} (exit {result.returncode}): {detail}")
 
     def soft_reset(self) -> None:
         self._run("reset")
