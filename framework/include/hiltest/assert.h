@@ -336,6 +336,97 @@ extern int ht_expect_failure_count;
         } \
     } while (0)
 
+#define HT_EXPECT_GE(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a >= _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " >= " #b, _ht_a, _ht_b, \
+                        "expected " #a " >= " #b); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_LT(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a < _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " < " #b, _ht_a, _ht_b, \
+                        "expected " #a " < " #b); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_LE(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a <= _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " <= " #b, _ht_a, _ht_b, \
+                        "expected " #a " <= " #b); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_EQ_U32(expected, actual) \
+    do { \
+        uint32_t _ht_e = (uint32_t)(expected); \
+        uint32_t _ht_a = (uint32_t)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #actual, \
+                        (long)_ht_e, (long)_ht_a, \
+                        "expected " #expected " == " #actual " (u32)"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_FLOAT_NEAR(expected, actual, epsilon) \
+    do { \
+        double _ht_e = (double)(expected); \
+        double _ht_a = (double)(actual); \
+        double _ht_eps = (double)(epsilon); \
+        if (fabs(_ht_e - _ht_a) > _ht_eps) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, \
+                         #actual, "float mismatch: |" #expected " - " #actual "| > " #epsilon); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_IN_RANGE(val, lo, hi) \
+    do { \
+        long _ht_v = (long)(val); \
+        long _ht_lo = (long)(lo); \
+        long _ht_hi = (long)(hi); \
+        if (_ht_v < _ht_lo || _ht_v > _ht_hi) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #val, _ht_lo, _ht_v, \
+                        "expected " #lo " <= " #val " <= " #hi); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_MEM_EQ(expected, actual, len) \
+    do { \
+        if (memcmp((expected), (actual), (len)) != 0) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, \
+                         #actual, "memory mismatch over " #len " bytes"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_STR_CONTAINS(haystack, needle) \
+    do { \
+        const char* _ht_h = (haystack); \
+        const char* _ht_n = (needle); \
+        if (_ht_h == 0 || _ht_n == 0 || strstr(_ht_h, _ht_n) == 0) { \
+            ht_fail_str(__FILE__, (uint32_t)__LINE__, #haystack, \
+                        _ht_n ? _ht_n : "(null)", \
+                        _ht_h ? _ht_h : "(null)", \
+                        "string does not contain expected substring"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
 #ifdef __cplusplus
 }
 #endif
