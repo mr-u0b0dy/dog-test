@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 dog-test contributors
+
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dog-test-hil"
+version = "0.1.0"
+description = "Hardware-in-the-loop test framework for embedded C/C++ systems"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "dog-test contributors" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Embedded Systems",
+]
+
+dependencies = [
+    "pyserial>=3.5",
+]
+
+[project.optional-dependencies]
+pyocd = ["pyocd>=0.36"]
+saleae = ["saleae>=1.0"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "mypy>=1.0",
+    "ruff>=0.4",
+]
+all = [
+    "dog-test-hil[pyocd,saleae,dev]",
+]
+
+[project.scripts]
+hil-runner = "tools.hil_runner:main"
+
+[project.urls]
+Homepage = "https://github.com/your-org/dog-test"
+Documentation = "https://github.com/your-org/dog-test#readme"
+Repository = "https://github.com/your-org/dog-test"
+Issues = "https://github.com/your-org/dog-test/issues"
+
+[tool.setuptools.packages.find]
+include = ["tools*"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["serial.*", "saleae.*", "pyocd.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+addopts = "-v --tb=short"

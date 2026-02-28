@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 dog-test contributors
 from __future__ import annotations
 
 import os
@@ -101,7 +103,11 @@ class SaleaeLogicAdapter:
                     capture.export_data_table(filepath=str(csv_path), analyzers=[analyzer])
                     rows = self._read_csv_rows(csv_path)
                 except Exception:
-                    rows = []
+                    import logging as _log
+                    _log.getLogger(__name__).error(
+                        "Saleae CSV export failed for protocol=%s", protocol, exc_info=True
+                    )
+                    raise
 
             exported = {
                 "duration_ms": duration_ms,

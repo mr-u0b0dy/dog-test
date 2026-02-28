@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 dog-test contributors
 """HIL embedded test runner – orchestrates flash, reset, serial capture, and
 optional Saleae logic-analyser monitoring for dog-test integration tests."""
 from __future__ import annotations
@@ -31,15 +33,32 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from tools.backends.flash.openocd_backend import OpenOcdFlashBackend
-from tools.backends.flash.pyocd_backend import PyOcdFlashBackend
-from tools.backends.reset.openocd_reset import OpenOcdResetBackend
-from tools.backends.reset.pyocd_reset import PyOcdResetBackend
+from tools.backends.flash import get_flash_backend
+from tools.backends.reset import get_reset_backend
 from tools.logic.assertions import evaluate_monitor_expectations
 from tools.logic.saleae_adapter import SaleaeLogicAdapter
 from tools.specs.monitor_contract import MonitorRequest
 
 log = logging.getLogger("hil_runner")
+
+# ── Signal handling ────────────────────────────────────────────────────
+_cleanup_callbacks: list = []
+
+
+def _signal_handler(signum: int, frame: object) -> None:  # noqa: ARG001
+    """Graceful shutdown — invoke registered cleanup callbacks."""
+    log.warning("caught signal %d, cleaning up…", signum)
+    for cb in reversed(_cleanup_callbacks):
+        try:
+            cb()
+        except Exception:
+            pass
+    sys.exit(128 + signum)
+
+
+import signal as _signal
+_signal.signal(_signal.SIGINT, _signal_handler)
+_signal.signal(_signal.SIGTERM, _signal_handler)
 
 
 # ── Data models ────────────────────────────────────────────────────────
@@ -163,25 +182,31 @@ def build_target(preset: str, target: Optional[str]) -> None:
 
 # ── Flash / Reset / Serial / Monitor ──────────────────────────────────
 
+def _make_flash_backend(config: TestExecutionConfig):
+    """Instantiate a flash backend from registry."""
+    cls = get_flash_backend(config.backend)
+    if config.backend == "openocd":
+        return cls(config.openocd_interface, config.openocd_target)
+    return cls(config.board_id)
+
+
+def _make_reset_backend(config: TestExecutionConfig):
+    """Instantiate a reset backend from registry."""
+    cls = get_reset_backend(config.backend)
+    if config.backend == "openocd":
+        return cls(config.openocd_interface, config.openocd_target)
+    return cls(config.board_id)
+
+
 def flash_firmware(config: TestExecutionConfig) -> None:
-    if config.backend == "pyocd":
-        backend = PyOcdFlashBackend(config.board_id)
-    elif config.backend == "openocd":
-        backend = OpenOcdFlashBackend(config.openocd_interface, config.openocd_target)
-    else:
-        raise ValueError(f"unsupported backend: {config.backend}")
+    backend = _make_flash_backend(config)
     backend.flash(config.firmware)
 
 
 def apply_reset(config: TestExecutionConfig) -> None:
     if config.reset_mode == "none":
         return
-    if config.backend == "pyocd":
-        reset_backend = PyOcdResetBackend(config.board_id)
-    elif config.backend == "openocd":
-        reset_backend = OpenOcdResetBackend(config.openocd_interface, config.openocd_target)
-    else:
-        raise ValueError(f"unsupported backend: {config.backend}")
+    reset_backend = _make_reset_backend(config)
 
     if config.reset_mode == "soft":
         reset_backend.soft_reset()
@@ -453,6 +478,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-monitor", action="store_true")
     parser.add_argument("--retries", type=int, default=0, help="number of retries for flaky tests")
     parser.add_argument("--junit-xml", default=None, help="write JUnit XML results to this path")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="print execution plan without running anything")
     parser.add_argument("-v", "--verbose", action="store_true", help="enable debug logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="suppress info logging")
     return parser.parse_args()
@@ -472,9 +499,40 @@ def _setup_logging(args: argparse.Namespace) -> None:
     )
 
 
+def _print_dry_run(args: argparse.Namespace, monitor: MonitorRequest | None) -> None:
+    """Print what the runner *would* do, then exit."""
+    print("=== dry-run ===")
+    if args.test_plan:
+        plan = load_test_plan(args.test_plan)
+        print(f"test plan : {args.test_plan} ({len(plan)} tests)")
+        for item in plan:
+            print(f"  - {item.name}  firmware={item.firmware}  reset={item.reset_mode}")
+    else:
+        print(f"firmware  : {args.firmware}")
+        print(f"test name : {args.test_name}")
+    print(f"backend   : {args.backend}")
+    print(f"serial    : {args.serial_port or '(none)'}")
+    print(f"baudrate  : {args.baudrate}")
+    print(f"reset mode: {args.reset_mode}")
+    print(f"skip flash: {args.skip_flash}")
+    print(f"skip reset: {args.skip_reset}")
+    print(f"skip exec : {args.skip_target_exec}")
+    print(f"skip mon  : {args.skip_monitor}")
+    print(f"retries   : {args.retries}")
+    if monitor:
+        print(f"monitor   : protocol={monitor.protocol} timeout={monitor.timeout_ms}ms")
+    print(f"junit xml : {args.junit_xml or '(none)'}")
+    print("=== end ===")
+
+
 def main() -> int:
     args = parse_args()
     _setup_logging(args)
+
+    # Fail-fast: require pyserial when target execution is needed
+    if not args.skip_target_exec and serial is None:
+        log.error("pyserial is required for target execution (pip install pyserial)")
+        return 1
 
     if args.configure_preset:
         configure_build(args.configure_preset)
@@ -485,6 +543,10 @@ def main() -> int:
     monitor = None
     if args.monitor_spec:
         monitor = MonitorRequest.from_dict(json.loads(args.monitor_spec))
+
+    if args.dry_run:
+        _print_dry_run(args, monitor)
+        return 0
 
     results: list[TestResult] = []
 
