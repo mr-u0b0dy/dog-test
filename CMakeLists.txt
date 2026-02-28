@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(dog_test_hil_framework C CXX)
+project(dog_test_hil_framework VERSION 0.1.0 LANGUAGES C CXX)
 
 enable_testing()
 
@@ -20,3 +20,4 @@ add_subdirectory(examples/uart_loopback)
 add_subdirectory(examples/i2c_smoke)
 add_subdirectory(examples/spi_transfer)
 add_subdirectory(tests)
+add_subdirectory(tests/host)

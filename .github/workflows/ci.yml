@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install pytest pyserial
+
+      - name: Configure (host-debug)
+        run: cmake --preset host-debug
+
+      - name: Build (host-debug)
+        run: cmake --build --preset host-debug
+
+      - name: Run CTest suite
+        run: ctest --preset host-debug --output-junit build/host-debug/ctest-results.xml
+
+      - name: Run Python unit tests
+        run: python -m pytest tests/python/ -v --tb=short --junitxml=build/host-debug/pytest-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            build/host-debug/ctest-results.xml
+            build/host-debug/pytest-results.xml

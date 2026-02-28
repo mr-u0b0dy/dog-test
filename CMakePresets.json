@@ -16,6 +16,15 @@
       }
     },
     {
+      "name": "host-release",
+      "displayName": "Host Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/host-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
       "name": "arm-gcc-debug",
       "displayName": "ARM GCC Debug",
       "generator": "Ninja",
@@ -23,6 +32,16 @@
       "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "arm-gcc-release",
+      "displayName": "ARM GCC Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/arm-gcc-release",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -32,14 +51,29 @@
       "configurePreset": "host-debug"
     },
     {
+      "name": "host-release",
+      "configurePreset": "host-release"
+    },
+    {
       "name": "arm-gcc-debug",
       "configurePreset": "arm-gcc-debug"
+    },
+    {
+      "name": "arm-gcc-release",
+      "configurePreset": "arm-gcc-release"
     }
   ],
   "testPresets": [
     {
       "name": "host-debug",
       "configurePreset": "host-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "host-release",
+      "configurePreset": "host-release",
       "output": {
         "outputOnFailure": true
       }
