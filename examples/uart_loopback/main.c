@@ -19,7 +19,4 @@ HT_TEST("uart_loopback_basic", HT_RESET_NONE, &uart_monitor, uart_loopback_basic
     return HT_TEST_PASSED;
 }
 
-int main(void) {
-    puts("HT_EVENT boot");
-    return ht_run_all_tests();
-}
+HT_MAIN()

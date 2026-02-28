@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "hiltest/assert.h"
+#include "hiltest/monitor_spec.h"
 #include "hiltest/test_case.h"
 
 static const ht_monitor_spec_t i2c_monitor = {
@@ -17,7 +18,4 @@ HT_TEST("i2c_device_id", HT_RESET_SOFT, &i2c_monitor, i2c_device_id) {
     return HT_TEST_PASSED;
 }
 
-int main(void) {
-    puts("HT_EVENT boot");
-    return ht_run_all_tests();
-}
+HT_MAIN()

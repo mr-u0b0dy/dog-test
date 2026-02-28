@@ -2,13 +2,40 @@
 #define HILTEST_ASSERT_H
 
 #include <stdint.h>
+#include <inttypes.h>
+#include <string.h>
+#include <math.h>
 #include "hiltest/test_case.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * Low-level failure reporters.
+ * ht_fail_impl  – plain expression + message (used by boolean assertions).
+ * ht_fail_cmp   – comparison failure with stringified actual/expected values.
+ * ht_fail_str   – string comparison failure with actual string values.
+ */
 void ht_fail_impl(const char* file, uint32_t line, const char* expr, const char* message);
+void ht_fail_cmp(const char* file, uint32_t line,
+                 const char* expr,
+                 long expected, long actual,
+                 const char* message);
+void ht_fail_str(const char* file, uint32_t line,
+                 const char* expr,
+                 const char* expected, const char* actual,
+                 const char* message);
+
+/**
+ * Non-fatal expectation support.
+ * When an HT_EXPECT_* macro fails, it records the failure here instead of
+ * returning HT_TEST_FAILED.  The runner checks this flag after the test
+ * function returns HT_TEST_PASSED and downgrades to HT_TEST_FAILED.
+ */
+extern int ht_expect_failure_count;
+
+/* ── Boolean assertions (fatal) ────────────────────────────────────── */
 
 #define HT_ASSERT_TRUE(expr) \
     do { \
@@ -26,19 +53,283 @@ void ht_fail_impl(const char* file, uint32_t line, const char* expr, const char*
         } \
     } while (0)
 
+/* ── Comparison assertions (fatal, print expected vs actual) ───────── */
+
 #define HT_ASSERT_EQ(expected, actual) \
     do { \
-        if ((expected) != (actual)) { \
-            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #actual, "expected equality"); \
+        long _ht_e = (long)(expected); \
+        long _ht_a = (long)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                        "expected " #expected " == " #actual); \
             return HT_TEST_FAILED; \
         } \
     } while (0)
 
 #define HT_ASSERT_NE(expected, actual) \
     do { \
-        if ((expected) == (actual)) { \
-            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #actual, "expected inequality"); \
+        long _ht_e = (long)(expected); \
+        long _ht_a = (long)(actual); \
+        if (_ht_e == _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                        "expected " #expected " != " #actual); \
             return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_GT(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a > _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " > " #b, _ht_a, _ht_b, \
+                        "expected " #a " > " #b); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_GE(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a >= _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " >= " #b, _ht_a, _ht_b, \
+                        "expected " #a " >= " #b); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_LT(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a < _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " < " #b, _ht_a, _ht_b, \
+                        "expected " #a " < " #b); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_LE(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a <= _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " <= " #b, _ht_a, _ht_b, \
+                        "expected " #a " <= " #b); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Typed comparison assertions (unsigned 32-bit) ─────────────────── */
+
+#define HT_ASSERT_EQ_U32(expected, actual) \
+    do { \
+        uint32_t _ht_e = (uint32_t)(expected); \
+        uint32_t _ht_a = (uint32_t)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #actual, \
+                        (long)_ht_e, (long)_ht_a, \
+                        "expected " #expected " == " #actual " (u32)"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Floating-point assertion ──────────────────────────────────────── */
+
+#define HT_ASSERT_FLOAT_NEAR(expected, actual, epsilon) \
+    do { \
+        double _ht_e = (double)(expected); \
+        double _ht_a = (double)(actual); \
+        double _ht_eps = (double)(epsilon); \
+        if (fabs(_ht_e - _ht_a) > _ht_eps) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, \
+                         #actual, "float mismatch: |" #expected " - " #actual "| > " #epsilon); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Range assertion ───────────────────────────────────────────────── */
+
+#define HT_ASSERT_IN_RANGE(val, lo, hi) \
+    do { \
+        long _ht_v = (long)(val); \
+        long _ht_lo = (long)(lo); \
+        long _ht_hi = (long)(hi); \
+        if (_ht_v < _ht_lo || _ht_v > _ht_hi) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #val, _ht_lo, _ht_v, \
+                        "expected " #lo " <= " #val " <= " #hi); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Memory assertion ──────────────────────────────────────────────── */
+
+#define HT_ASSERT_MEM_EQ(expected, actual, len) \
+    do { \
+        if (memcmp((expected), (actual), (len)) != 0) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, \
+                         #actual, "memory mismatch over " #len " bytes"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Pointer assertions ────────────────────────────────────────────── */
+
+#define HT_ASSERT_NULL(ptr) \
+    do { \
+        if ((ptr) != 0) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #ptr, "expected NULL"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_NOT_NULL(ptr) \
+    do { \
+        if ((ptr) == 0) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #ptr, "expected non-NULL"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── String assertions ─────────────────────────────────────────────── */
+
+#define HT_ASSERT_STR_EQ(expected, actual) \
+    do { \
+        const char* _ht_e = (expected); \
+        const char* _ht_a = (actual); \
+        if (_ht_e == 0 || _ht_a == 0 || strcmp(_ht_e, _ht_a) != 0) { \
+            ht_fail_str(__FILE__, (uint32_t)__LINE__, #actual, \
+                        _ht_e ? _ht_e : "(null)", \
+                        _ht_a ? _ht_a : "(null)", \
+                        "string mismatch"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_STR_CONTAINS(haystack, needle) \
+    do { \
+        const char* _ht_h = (haystack); \
+        const char* _ht_n = (needle); \
+        if (_ht_h == 0 || _ht_n == 0 || strstr(_ht_h, _ht_n) == 0) { \
+            ht_fail_str(__FILE__, (uint32_t)__LINE__, #haystack, \
+                        _ht_n ? _ht_n : "(null)", \
+                        _ht_h ? _ht_h : "(null)", \
+                        "string does not contain expected substring"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Custom-message assertion ──────────────────────────────────────── */
+
+#define HT_ASSERT_MSG(expr, message) \
+    do { \
+        if (!(expr)) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #expr, (message)); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Skip macro (returns HT_TEST_SKIPPED from the test function) ─── */
+
+#define HT_SKIP(reason) \
+    do { \
+        ht_fail_impl(__FILE__, (uint32_t)__LINE__, "", (reason)); \
+        return HT_TEST_SKIPPED; \
+    } while (0)
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  Non-fatal HT_EXPECT_* variants
+ *
+ *  These record a failure (incrementing ht_expect_failure_count) but
+ *  do NOT return from the test function, allowing subsequent checks
+ *  to execute.  The runner promotes the test to HT_TEST_FAILED after
+ *  it returns if any expectations failed.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+#define HT_EXPECT_TRUE(expr) \
+    do { \
+        if (!(expr)) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #expr, "expected true"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_FALSE(expr) \
+    do { \
+        if ((expr)) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #expr, "expected false"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_EQ(expected, actual) \
+    do { \
+        long _ht_e = (long)(expected); \
+        long _ht_a = (long)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                        "expected " #expected " == " #actual); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_NE(expected, actual) \
+    do { \
+        long _ht_e = (long)(expected); \
+        long _ht_a = (long)(actual); \
+        if (_ht_e == _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                        "expected " #expected " != " #actual); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_GT(a, b) \
+    do { \
+        long _ht_a = (long)(a); \
+        long _ht_b = (long)(b); \
+        if (!(_ht_a > _ht_b)) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, #a " > " #b, _ht_a, _ht_b, \
+                        "expected " #a " > " #b); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_NULL(ptr) \
+    do { \
+        if ((ptr) != 0) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #ptr, "expected NULL"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_NOT_NULL(ptr) \
+    do { \
+        if ((ptr) == 0) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #ptr, "expected non-NULL"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_STR_EQ(expected, actual) \
+    do { \
+        const char* _ht_e = (expected); \
+        const char* _ht_a = (actual); \
+        if (_ht_e == 0 || _ht_a == 0 || strcmp(_ht_e, _ht_a) != 0) { \
+            ht_fail_str(__FILE__, (uint32_t)__LINE__, #actual, \
+                        _ht_e ? _ht_e : "(null)", \
+                        _ht_a ? _ht_a : "(null)", \
+                        "string mismatch"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_MSG(expr, message) \
+    do { \
+        if (!(expr)) { \
+            ht_fail_impl(__FILE__, (uint32_t)__LINE__, #expr, (message)); \
+            ht_expect_failure_count++; \
         } \
     } while (0)
 
