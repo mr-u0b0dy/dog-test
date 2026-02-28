@@ -21,17 +21,53 @@ export default defineNuxtConfig({
     sections: [
       {
         title: 'Getting Started',
-        description: 'Quick start guides in English and French.',
+        description: 'Installation, project structure, and first-test tutorial.',
         links: [
           {
-            title: 'English Introduction',
-            description: 'Start with the English introduction.',
+            title: 'Introduction',
+            description: 'What dog-test is and why it exists.',
             href: '/en/getting-started/introduction',
           },
           {
-            title: 'Introduction en Français',
-            description: 'Commencez avec l’introduction en français.',
-            href: '/fr/getting-started/introduction',
+            title: 'Installation',
+            description: 'Prerequisites, cloning, and first build.',
+            href: '/en/getting-started/installation',
+          },
+          {
+            title: 'Project Structure',
+            description: 'Directory layout and component overview.',
+            href: '/en/getting-started/project-structure',
+          },
+          {
+            title: 'Writing Your First Test',
+            description: 'Step-by-step guide to your first HIL test.',
+            href: '/en/getting-started/first-test',
+          },
+        ],
+      },
+      {
+        title: 'Reference',
+        description: 'Architecture, examples, CLI workflow, and C API.',
+        links: [
+          {
+            title: 'Architecture',
+            description: 'Component overview and execution flow.',
+            href: '/en/reference/architecture',
+          },
+          {
+            title: 'Examples',
+            description: 'UART, I2C, and SPI example walkthroughs.',
+            href: '/en/reference/examples',
+          },
+          {
+            title: 'HIL Workflow',
+            description: 'Full CLI reference for hil_runner.py.',
+            href: '/en/reference/hil-workflow',
+          },
+          {
+            title: 'C API Reference',
+            description: 'All assertion macros, test registration, and types.',
+            href: '/en/reference/c-api',
           },
         ],
       },
