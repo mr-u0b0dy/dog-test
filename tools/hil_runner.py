@@ -74,6 +74,7 @@ class TestResult:
     duration_s: float = 0.0
     message: str = ""
     attempt: int = 1
+    serial_output: str = ""
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -190,10 +191,10 @@ def apply_reset(config: TestExecutionConfig) -> None:
         raise ValueError(f"unsupported reset mode: {config.reset_mode}")
 
 
-def run_target_test(config: TestExecutionConfig) -> int:
+def run_target_test(config: TestExecutionConfig) -> tuple[int, list[str]]:
     if not config.serial_port:
         log.warning("no serial port configured; target execution output not collected")
-        return 0
+        return (0, [])
 
     if serial is None:
         raise RuntimeError("pyserial is required for target execution (pip install pyserial)")
@@ -219,7 +220,7 @@ def run_target_test(config: TestExecutionConfig) -> int:
                 break
         else:
             log.error("serial read timed out after %.0fs without summary event", overall_timeout)
-            return 1
+            return (1, lines)
 
     failed = 0
     for line in lines:
@@ -231,7 +232,7 @@ def run_target_test(config: TestExecutionConfig) -> int:
                 log.error("failed to parse summary line %r: %s", line, exc)
                 failed = 1
             break
-    return failed
+    return (failed, lines)
 
 
 def run_monitor(config: TestExecutionConfig) -> None:
@@ -270,11 +271,16 @@ def execute_single_test(
                 apply_reset(config)
             if not args.skip_monitor:
                 run_monitor(config)
-            failed = 0 if args.skip_target_exec else run_target_test(config)
+            if args.skip_target_exec:
+                failed = 0
+                serial_lines: list[str] = []
+            else:
+                failed, serial_lines = run_target_test(config)
             status = "failed" if failed else "passed"
         except Exception as exc:
             status = "error"
             failed = 1
+            serial_lines = []
             log.error("test %s attempt %d error: %s", config.name, attempt, exc)
 
         elapsed = time.monotonic() - t0
@@ -284,6 +290,7 @@ def execute_single_test(
             duration_s=elapsed,
             message="" if status == "passed" else f"attempt {attempt}",
             attempt=attempt,
+            serial_output="\n".join(serial_lines),
         )
 
         if status == "passed":
@@ -301,12 +308,20 @@ def execute_single_test(
 
 def load_test_plan(path: str) -> list[TestPlanItem]:
     plan_data = json.loads(Path(path).read_text(encoding="utf-8"))
+    plan_dir = Path(path).parent
     items = plan_data.get("tests", [])
     loaded: list[TestPlanItem] = []
     for item in items:
         monitor = None
-        if item.get("monitor"):
-            monitor = MonitorRequest.from_dict(item["monitor"])
+        monitor_value = item.get("monitor")
+        if monitor_value:
+            if isinstance(monitor_value, str):
+                # Treat as file path (relative to the plan file directory)
+                spec_path = plan_dir / monitor_value
+                monitor_data = json.loads(spec_path.read_text(encoding="utf-8"))
+                monitor = MonitorRequest.from_dict(monitor_data)
+            else:
+                monitor = MonitorRequest.from_dict(monitor_value)
         loaded.append(
             TestPlanItem(
                 name=str(item.get("name", "unnamed_test")),
@@ -401,6 +416,10 @@ def write_junit_xml(results: list[TestResult], path: str) -> None:
         elif r.status == "skipped":
             ET.SubElement(tc, "skipped", {"message": r.message or ""})
 
+        if r.serial_output:
+            sysout = ET.SubElement(tc, "system-out")
+            sysout.text = r.serial_output
+
     tree = ET.ElementTree(testsuite)
     ET.indent(tree, space="  ")
     tree.write(path, encoding="unicode", xml_declaration=True)
@@ -425,6 +444,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--openocd-target", default=os.getenv("HIL_OPENOCD_TARGET"))
     parser.add_argument("--monitor-spec", default=None, help="JSON monitor spec")
     parser.add_argument("--test-plan", default=None, help="JSON file with list of tests")
+    parser.add_argument("--tag", default=None, help="run only tests matching this tag (target-side filtering)")
+    parser.add_argument("--filter", default=None, help="run only tests whose name contains this string (target-side filtering)")
     parser.add_argument("--reset-between-tests", action="store_true")
     parser.add_argument("--skip-flash", action="store_true")
     parser.add_argument("--skip-reset", action="store_true")
