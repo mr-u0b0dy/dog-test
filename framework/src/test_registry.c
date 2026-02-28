@@ -31,3 +31,8 @@ const ht_test_case_t* ht_registered_test_at(size_t index) {
 
     return g_tests[index];
 }
+
+void ht_reset_registry(void) {
+    memset(g_tests, 0, sizeof(g_tests));
+    g_test_count = 0;
+}

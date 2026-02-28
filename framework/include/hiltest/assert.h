@@ -27,6 +27,9 @@ void ht_fail_str(const char* file, uint32_t line,
                  const char* expected, const char* actual,
                  const char* message);
 
+/** Skip-reason recorder (does not pollute fail state). */
+void ht_skip_impl(const char* reason);
+
 /**
  * Non-fatal expectation support.
  * When an HT_EXPECT_* macro fails, it records the failure here instead of
@@ -234,7 +237,7 @@ extern int ht_expect_failure_count;
 
 #define HT_SKIP(reason) \
     do { \
-        ht_fail_impl(__FILE__, (uint32_t)__LINE__, "", (reason)); \
+        ht_skip_impl((reason)); \
         return HT_TEST_SKIPPED; \
     } while (0)
 

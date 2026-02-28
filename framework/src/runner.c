@@ -1,10 +1,14 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
 #include "hiltest/assert.h"
 
 /* ── Non-fatal expectation counter ─────────────────────────────────── */
 int ht_expect_failure_count = 0;
+
+/* ── Skip reason (set by ht_skip_impl, separate from fail state) ──── */
+static const char* g_skip_reason;
 
 static const char* g_last_file;
 static uint32_t g_last_line;
@@ -28,6 +32,10 @@ void ht_fail_impl(const char* file, uint32_t line, const char* expr, const char*
     g_last_message = message;
     g_has_cmp_values = 0;
     g_has_str_values = 0;
+}
+
+void ht_skip_impl(const char* reason) {
+    g_skip_reason = reason;
 }
 
 void ht_fail_cmp(const char* file, uint32_t line,
@@ -98,12 +106,14 @@ void ht_emit_result_start(const ht_test_case_t* test_case) {
         _emit_kv("tags", test_case->tags);
     }
     putchar('\n');
+    fflush(stdout);
 }
 
 void ht_emit_result_pass(const ht_test_case_t* test_case) {
     printf("HT_EVENT pass");
     _emit_kv("name", test_case->name);
     putchar('\n');
+    fflush(stdout);
 }
 
 void ht_emit_result_fail(const ht_test_case_t* test_case, const char* reason) {
@@ -122,6 +132,7 @@ void ht_emit_result_fail(const ht_test_case_t* test_case, const char* reason) {
         _emit_kv("actual_str", g_str_actual);
     }
     putchar('\n');
+    fflush(stdout);
 }
 
 void ht_emit_result_skip(const ht_test_case_t* test_case, const char* reason) {
@@ -129,6 +140,7 @@ void ht_emit_result_skip(const ht_test_case_t* test_case, const char* reason) {
     _emit_kv("name", test_case->name);
     _emit_kv("reason", reason ? reason : g_last_message);
     putchar('\n');
+    fflush(stdout);
 }
 
 static void _reset_fail_state(void) {
@@ -138,6 +150,7 @@ static void _reset_fail_state(void) {
     g_last_message   = 0;
     g_has_cmp_values = 0;
     g_has_str_values = 0;
+    g_skip_reason    = 0;
 }
 
 /** Check if a comma-separated @p tags string contains @p tag. */
@@ -216,7 +229,7 @@ static int _run_tests_impl(const char* filter, const char* tag) {
                 ht_emit_result_pass(tc);
                 break;
             case HT_TEST_SKIPPED:
-                ht_emit_result_skip(tc, g_last_message);
+                ht_emit_result_skip(tc, g_skip_reason);
                 skipped++;
                 break;
             case HT_TEST_FAILED:
@@ -230,6 +243,7 @@ static int _run_tests_impl(const char* filter, const char* tag) {
 
     printf("HT_EVENT summary total=%d passed=%d failed=%d skipped=%d\n",
            ran, ran - failed - skipped, failed, skipped);
+    fflush(stdout);
     return failed;
 }
 

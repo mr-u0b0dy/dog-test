@@ -47,6 +47,9 @@ void ht_register_test(const ht_test_case_t* test_case);
 size_t ht_registered_test_count(void);
 const ht_test_case_t* ht_registered_test_at(size_t index);
 
+/** Reset the test registry (clear all registrations). Useful for testing. */
+void ht_reset_registry(void);
+
 void ht_emit_result_start(const ht_test_case_t* test_case);
 void ht_emit_result_pass(const ht_test_case_t* test_case);
 void ht_emit_result_fail(const ht_test_case_t* test_case, const char* reason);
