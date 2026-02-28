@@ -9,6 +9,9 @@ on:
 jobs:
   host-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
@@ -18,10 +21,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Python dependencies
-        run: pip install pytest pyserial
+        run: pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check tools/ tests/python/
+
+      - name: Type check (mypy)
+        run: mypy tools/ --ignore-missing-imports
 
       - name: Configure (host-debug)
         run: cmake --preset host-debug
@@ -32,14 +41,19 @@ jobs:
       - name: Run CTest suite
         run: ctest --preset host-debug --output-junit build/host-debug/ctest-results.xml
 
-      - name: Run Python unit tests
-        run: python -m pytest tests/python/ -v --tb=short --junitxml=build/host-debug/pytest-results.xml
+      - name: Run Python unit tests with coverage
+        run: |
+          python -m pytest tests/python/ -v --tb=short \
+            --junitxml=build/host-debug/pytest-results.xml \
+            --cov=tools --cov-report=xml:build/host-debug/coverage.xml \
+            --cov-report=term-missing
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-py${{ matrix.python-version }}
           path: |
             build/host-debug/ctest-results.xml
             build/host-debug/pytest-results.xml
+            build/host-debug/coverage.xml
