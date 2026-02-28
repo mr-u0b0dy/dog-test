@@ -1,0 +1,11 @@
+{
+  "protocol": "uart",
+  "channels": "ch0=tx,ch1=rx",
+  "trigger": "start-on-byte:0x55",
+  "timeout_ms": 1200,
+  "expect": {
+    "protocol": "uart",
+    "min_items": 1,
+    "contains": "0x55"
+  }
+}

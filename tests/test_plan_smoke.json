@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "uart_loopback_once",
+      "firmware": "build/host-debug/examples/uart_loopback/uart_loopback",
+      "reset_mode": "none"
+    },
+    {
+      "name": "i2c_smoke_once",
+      "firmware": "build/host-debug/examples/i2c_smoke/i2c_smoke",
+      "reset_mode": "soft"
+    },
+    {
+      "name": "spi_transfer_once",
+      "firmware": "build/host-debug/examples/spi_transfer/spi_transfer",
+      "reset_mode": "hard"
+    }
+  ]
+}

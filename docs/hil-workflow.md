@@ -1,0 +1,61 @@
+# HIL Workflow
+
+## Prerequisites
+
+- `cmake >= 3.22`
+- `ninja`
+- Python 3.10+
+- `pyocd`
+- `openocd` (optional backend)
+- `pyserial`
+- Saleae Logic 2 and Python automation package (`saleae`)
+
+## Typical run
+
+```bash
+python3 tools/hil_runner.py \
+  --configure-preset arm-gcc-debug \
+  --build-preset arm-gcc-debug \
+  --target uart_loopback \
+  --firmware build/arm-gcc-debug/examples/uart_loopback/uart_loopback \
+  --backend pyocd \
+  --serial-port /dev/ttyACM0 \
+  --reset-mode soft
+```
+
+## OpenOCD backend run
+
+```bash
+python3 tools/hil_runner.py \
+  --firmware build/arm-gcc-debug/examples/uart_loopback/uart_loopback \
+  --backend openocd \
+  --openocd-interface interface/cmsis-dap.cfg \
+  --openocd-target target/stm32f4x.cfg \
+  --serial-port /dev/ttyACM0 \
+  --reset-mode hard
+```
+
+## Suite plan run (once per test, reset before next)
+
+```bash
+python3 tools/hil_runner.py \
+  --test-plan tests/test_plan_smoke.json \
+  --reset-between-tests \
+  --backend pyocd
+```
+
+## Monitor spec example
+
+```json
+{
+  "protocol": "uart",
+  "channels": "ch0=tx,ch1=rx",
+  "trigger": "start-on-byte:0x55",
+  "timeout_ms": 1500,
+  "expect": {
+    "protocol": "uart",
+    "min_items": 1,
+    "contains": "0x55"
+  }
+}
+```

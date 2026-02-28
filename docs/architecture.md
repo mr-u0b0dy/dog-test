@@ -1,0 +1,30 @@
+# Architecture
+
+This framework separates target and host concerns:
+
+- `framework/` provides embedded C APIs for assertions, test registration, and result events.
+- `tools/hil_runner.py` orchestrates configure/build/flash/reset/execute.
+- `tools/backends/` provides backend adapters (`pyOCD`, OpenOCD).
+- `tools/backends/lang/` provides language adapters (Rust roadmap placeholder).
+- `tools/logic/` provides Saleae Automation API capture + protocol assertions.
+
+## Execution flow
+
+1. Host builds firmware for the selected test target.
+2. Host flashes firmware to target (`pyocd` or `openocd`).
+3. Host applies reset policy (`none|soft|hard`).
+4. Optional logic capture begins on Saleae for UART/I2C/SPI.
+5. Target emits `HT_EVENT` lines over serial.
+6. Host parses summary and exits pass/fail.
+
+## Suite-mode execution
+
+`--test-plan` runs multiple tests once each.
+
+- Each plan item can provide firmware path, reset mode, and monitor spec.
+- `--reset-between-tests` enforces explicit reset between adjacent tests.
+- This supports HIL isolation for IT/ST flows where hardware state must be reinitialized.
+
+## Future Rust compatibility
+
+The host runner is language-neutral. Any firmware that emits compatible `HT_EVENT` records can be executed through the same runner. Rust support will provide an adapter and test metadata generator later.

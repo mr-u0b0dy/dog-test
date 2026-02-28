@@ -1,0 +1,23 @@
+# Rust Roadmap
+
+## Goal
+
+Enable Rust embedded integration tests to run through the same host orchestrator used by C/C++ tests.
+
+## Compatibility contract
+
+Rust test binaries should emit the same line-oriented event protocol:
+
+- `HT_EVENT start ...`
+- `HT_EVENT pass ...`
+- `HT_EVENT fail ...`
+- `HT_EVENT summary total=<n> failed=<m>`
+
+If this contract is preserved, `tools/hil_runner.py` remains language-neutral.
+
+## Planned work
+
+1. Add Rust build adapter using `cargo build --target <triple>`.
+2. Emit generated test plan JSON from Rust metadata.
+3. Provide reset/monitor attributes in Rust macros.
+4. Add mixed-language suites (C/C++ + Rust) in one `--test-plan` run.
