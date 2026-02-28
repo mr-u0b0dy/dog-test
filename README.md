@@ -10,7 +10,7 @@ A toolchain-generic embedded test framework focused on ARM (`arm-none-eabi`) wit
 4. Saleae Logic Python API integration for UART/I2C/SPI capture and decode
 5. Per-test reset mode support (`none`, `soft`, `hard`)
 6. Optional test-plan mode to run each test once and reset before the next
-6. Future Rust support path via protocol-compatible host runner
+7. Future Rust support path via protocol-compatible host runner
 
 ## Project layout
 
@@ -128,7 +128,7 @@ Use tasks:
 - Rust integration is planned by implementing the same `HT_EVENT` protocol from Rust test binaries.
 
 See:
-- `docs/architecture.md`
-- `docs/hil-workflow.md`
-- `docs/examples.md`
-- `docs/rust-roadmap.md`
+- [Architecture](docs-site/content/en/4.reference/1.architecture.md)
+- [HIL Workflow](docs-site/content/en/4.reference/3.hil-workflow.md)
+- [Examples](docs-site/content/en/4.reference/2.examples.md)
+- [Rust Roadmap](docs-site/content/en/4.reference/4.rust-roadmap.md)
