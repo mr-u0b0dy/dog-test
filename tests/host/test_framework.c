@@ -116,11 +116,23 @@ HT_TEST("expect_all_pass", HT_RESET_NONE, NULL, test_expect_all_pass) {
     HT_EXPECT_EQ(42, 42);
     HT_EXPECT_NE(1, 2);
     HT_EXPECT_GT(10, 5);
+    HT_EXPECT_GE(10, 10);
+    HT_EXPECT_GE(10, 5);
+    HT_EXPECT_LT(5, 10);
+    HT_EXPECT_LE(10, 10);
+    HT_EXPECT_LE(5, 10);
     HT_EXPECT_NULL(NULL);
     int x = 1;
     HT_EXPECT_NOT_NULL(&x);
     HT_EXPECT_STR_EQ("a", "a");
+    HT_EXPECT_STR_CONTAINS("hello world", "world");
     HT_EXPECT_MSG(1, "ok");
+    HT_EXPECT_EQ_U32(0xDEADBEEF, 0xDEADBEEF);
+    HT_EXPECT_FLOAT_NEAR(3.14, 3.14159, 0.01);
+    HT_EXPECT_IN_RANGE(5, 1, 10);
+    uint8_t a1[] = {1, 2, 3};
+    uint8_t b1[] = {1, 2, 3};
+    HT_EXPECT_MEM_EQ(a1, b1, sizeof(a1));
     return HT_TEST_PASSED;
 }
 
@@ -160,6 +172,100 @@ static int fixture_teardown(void) {
 HT_TEST_F("fixture_test", HT_RESET_NONE, NULL,
            fixture_setup, fixture_teardown, test_fixture) {
     HT_ASSERT_EQ(100, fixture_counter);
+    return HT_TEST_PASSED;
+}
+
+/* ── Fixture + tags (HT_TEST_FT) test ─────────────────────────────── */
+
+HT_TEST_FT("fixture_tagged", HT_RESET_NONE, NULL,
+            fixture_setup, fixture_teardown, "unit,fixture", test_fixture_tagged) {
+    HT_ASSERT_EQ(100, fixture_counter);
+    return HT_TEST_PASSED;
+}
+
+/* ── Failure-path tests ────────────────────────────────────────────── */
+
+/*
+ * These use helper functions to exercise failing assertions without
+ * failing the entire test suite.  The helpers are NOT registered as
+ * HT_TESTs — they are called directly and their return values inspected.
+ */
+
+static ht_test_result_t _helper_assert_eq_fail(void) {
+    HT_ASSERT_EQ(1, 2);
+    return HT_TEST_PASSED;
+}
+
+static ht_test_result_t _helper_assert_str_eq_fail(void) {
+    HT_ASSERT_STR_EQ("hello", "world");
+    return HT_TEST_PASSED;
+}
+
+static ht_test_result_t _helper_skip(void) {
+    HT_SKIP("intentional skip");
+    return HT_TEST_PASSED;
+}
+
+HT_TEST("fail_assert_eq_returns_failed", HT_RESET_NONE, NULL, test_fail_assert_eq) {
+    ht_test_result_t r = _helper_assert_eq_fail();
+    HT_ASSERT_EQ((long)r, (long)HT_TEST_FAILED);
+    return HT_TEST_PASSED;
+}
+
+HT_TEST("fail_assert_str_eq_returns_failed", HT_RESET_NONE, NULL, test_fail_assert_str_eq) {
+    ht_test_result_t r = _helper_assert_str_eq_fail();
+    HT_ASSERT_EQ((long)r, (long)HT_TEST_FAILED);
+    return HT_TEST_PASSED;
+}
+
+HT_TEST("skip_returns_skipped", HT_RESET_NONE, NULL, test_skip_returns_skipped) {
+    ht_test_result_t r = _helper_skip();
+    HT_ASSERT_EQ((long)r, (long)HT_TEST_SKIPPED);
+    return HT_TEST_PASSED;
+}
+
+/* ── Expect promotion test ─────────────────────────────────────────── */
+
+HT_TEST("expect_promotion", HT_RESET_NONE, NULL, test_expect_promotion) {
+    /* Save and reset the global counter so we can test independently. */
+    int saved = ht_expect_failure_count;
+    ht_expect_failure_count = 0;
+
+    /* A failing HT_EXPECT (run inline, not via helper — it won't return). */
+    HT_EXPECT_EQ(1, 2);   /* should fail non-fatally */
+    HT_ASSERT_EQ(ht_expect_failure_count, 1);
+
+    /* Restore so this test itself doesn't get promoted as failed. */
+    ht_expect_failure_count = saved;
+    return HT_TEST_PASSED;
+}
+
+/* ── Filtered / tag-based runner tests ─────────────────────────────── */
+
+HT_TEST("run_filtered_match", HT_RESET_NONE, NULL, test_run_filtered) {
+    /* Filter for a name that matches a known test but NOT this one. */
+    int failures = ht_run_tests_filtered("tagged_uart");
+    HT_ASSERT_EQ(failures, 0);
+    return HT_TEST_PASSED;
+}
+
+HT_TEST("run_filtered_nomatch", HT_RESET_NONE, NULL, test_run_filtered_unknown) {
+    /* No registered test should match this filter. 0 ran → 0 failed. */
+    int failures = ht_run_tests_filtered("_xyzzy_nonexistent_filter_");
+    HT_ASSERT_EQ(failures, 0);
+    return HT_TEST_PASSED;
+}
+
+HT_TEST("run_by_tag_smoke", HT_RESET_NONE, NULL, test_run_by_tag_smoke) {
+    /* We have tests tagged "smoke" (tagged_uart, tagged_spi). */
+    int failures = ht_run_tests_by_tag("smoke");
+    HT_ASSERT_EQ(failures, 0);
+    return HT_TEST_PASSED;
+}
+
+HT_TEST("run_by_tag_nomatch", HT_RESET_NONE, NULL, test_run_by_tag_unknown) {
+    int failures = ht_run_tests_by_tag("_xyzzy_nonexistent_tag_");
+    HT_ASSERT_EQ(failures, 0);
     return HT_TEST_PASSED;
 }
 
