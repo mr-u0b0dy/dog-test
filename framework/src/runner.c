@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright 2026 dog-test contributors */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -66,6 +69,70 @@ void ht_fail_str(const char* file, uint32_t line,
     g_str_actual     = actual;
 }
 
+/* ── Float comparison failure reporter ─────────────────────────────── */
+static int  g_has_float_values;
+static double g_float_expected;
+static double g_float_actual;
+static double g_float_tolerance;
+
+void ht_fail_float(const char* file, uint32_t line,
+                   const char* expr,
+                   double expected, double actual, double tolerance,
+                   const char* message) {
+    g_last_file      = file;
+    g_last_line      = line;
+    g_last_expr      = expr;
+    g_last_message   = message;
+    g_has_cmp_values = 0;
+    g_has_str_values = 0;
+    g_has_float_values = 1;
+    g_float_expected   = expected;
+    g_float_actual     = actual;
+    g_float_tolerance  = tolerance;
+}
+
+/* ── 64-bit comparison failure reporters ───────────────────────────── */
+static int     g_has_cmp64_values;
+static int64_t g_cmp64_expected;
+static int64_t g_cmp64_actual;
+
+void ht_fail_cmp64(const char* file, uint32_t line,
+                   const char* expr,
+                   int64_t expected, int64_t actual,
+                   const char* message) {
+    g_last_file       = file;
+    g_last_line       = line;
+    g_last_expr       = expr;
+    g_last_message    = message;
+    g_has_cmp_values  = 0;
+    g_has_str_values  = 0;
+    g_has_float_values = 0;
+    g_has_cmp64_values = 1;
+    g_cmp64_expected   = expected;
+    g_cmp64_actual     = actual;
+}
+
+static int      g_has_cmp_u64_values;
+static uint64_t g_cmp_u64_expected;
+static uint64_t g_cmp_u64_actual;
+
+void ht_fail_cmp_u64(const char* file, uint32_t line,
+                     const char* expr,
+                     uint64_t expected, uint64_t actual,
+                     const char* message) {
+    g_last_file         = file;
+    g_last_line         = line;
+    g_last_expr         = expr;
+    g_last_message      = message;
+    g_has_cmp_values    = 0;
+    g_has_str_values    = 0;
+    g_has_float_values  = 0;
+    g_has_cmp64_values  = 0;
+    g_has_cmp_u64_values = 1;
+    g_cmp_u64_expected   = expected;
+    g_cmp_u64_actual     = actual;
+}
+
 /* ── HT_EVENT output helpers ───────────────────────────────────────── */
 
 /** Print a key=value pair, quoting the value if it contains spaces or '='. */
@@ -131,6 +198,18 @@ void ht_emit_result_fail(const ht_test_case_t* test_case, const char* reason) {
         _emit_kv("expected_str", g_str_expected);
         _emit_kv("actual_str", g_str_actual);
     }
+    if (g_has_float_values) {
+        printf(" expected=%.10g actual=%.10g tolerance=%.10g",
+               g_float_expected, g_float_actual, g_float_tolerance);
+    }
+    if (g_has_cmp64_values) {
+        printf(" expected=%" PRId64 " actual=%" PRId64,
+               g_cmp64_expected, g_cmp64_actual);
+    }
+    if (g_has_cmp_u64_values) {
+        printf(" expected=%" PRIu64 " actual=%" PRIu64,
+               g_cmp_u64_expected, g_cmp_u64_actual);
+    }
     putchar('\n');
     fflush(stdout);
 }
@@ -144,13 +223,16 @@ void ht_emit_result_skip(const ht_test_case_t* test_case, const char* reason) {
 }
 
 static void _reset_fail_state(void) {
-    g_last_file      = 0;
-    g_last_line      = 0;
-    g_last_expr      = 0;
-    g_last_message   = 0;
-    g_has_cmp_values = 0;
-    g_has_str_values = 0;
-    g_skip_reason    = 0;
+    g_last_file        = 0;
+    g_last_line        = 0;
+    g_last_expr        = 0;
+    g_last_message     = 0;
+    g_has_cmp_values   = 0;
+    g_has_str_values   = 0;
+    g_has_float_values = 0;
+    g_has_cmp64_values = 0;
+    g_has_cmp_u64_values = 0;
+    g_skip_reason      = 0;
 }
 
 /** Check if a comma-separated @p tags string contains @p tag. */

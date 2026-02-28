@@ -1,5 +1,14 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright 2026 dog-test contributors */
+
 #ifndef HILTEST_ASSERT_H
 #define HILTEST_ASSERT_H
+
+/* ── Version information ───────────────────────────────────────────── */
+#define HILTEST_VERSION_MAJOR 0
+#define HILTEST_VERSION_MINOR 1
+#define HILTEST_VERSION_PATCH 0
+#define HILTEST_VERSION_STRING "0.1.0"
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -26,6 +35,24 @@ void ht_fail_str(const char* file, uint32_t line,
                  const char* expr,
                  const char* expected, const char* actual,
                  const char* message);
+
+/** Float comparison failure reporter with expected, actual, and tolerance. */
+void ht_fail_float(const char* file, uint32_t line,
+                   const char* expr,
+                   double expected, double actual, double tolerance,
+                   const char* message);
+
+/** 64-bit signed comparison failure reporter. */
+void ht_fail_cmp64(const char* file, uint32_t line,
+                   const char* expr,
+                   int64_t expected, int64_t actual,
+                   const char* message);
+
+/** 64-bit unsigned comparison failure reporter. */
+void ht_fail_cmp_u64(const char* file, uint32_t line,
+                     const char* expr,
+                     uint64_t expected, uint64_t actual,
+                     const char* message);
 
 /** Skip-reason recorder (does not pollute fail state). */
 void ht_skip_impl(const char* reason);
@@ -146,9 +173,87 @@ extern int ht_expect_failure_count;
         double _ht_a = (double)(actual); \
         double _ht_eps = (double)(epsilon); \
         if (fabs(_ht_e - _ht_a) > _ht_eps) { \
-            ht_fail_impl(__FILE__, (uint32_t)__LINE__, \
-                         #actual, "float mismatch: |" #expected " - " #actual "| > " #epsilon); \
+            ht_fail_float(__FILE__, (uint32_t)__LINE__, \
+                          #actual, _ht_e, _ht_a, _ht_eps, \
+                          "float mismatch: |" #expected " - " #actual "| > " #epsilon); \
             return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── 64-bit assertions ─────────────────────────────────────────────── */
+
+#define HT_ASSERT_EQ_I64(expected, actual) \
+    do { \
+        int64_t _ht_e = (int64_t)(expected); \
+        int64_t _ht_a = (int64_t)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                          "expected " #expected " == " #actual " (i64)"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_NE_I64(expected, actual) \
+    do { \
+        int64_t _ht_e = (int64_t)(expected); \
+        int64_t _ht_a = (int64_t)(actual); \
+        if (_ht_e == _ht_a) { \
+            ht_fail_cmp64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                          "expected " #expected " != " #actual " (i64)"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_EQ_U64(expected, actual) \
+    do { \
+        uint64_t _ht_e = (uint64_t)(expected); \
+        uint64_t _ht_a = (uint64_t)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp_u64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                            "expected " #expected " == " #actual " (u64)"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+#define HT_ASSERT_NE_U64(expected, actual) \
+    do { \
+        uint64_t _ht_e = (uint64_t)(expected); \
+        uint64_t _ht_a = (uint64_t)(actual); \
+        if (_ht_e == _ht_a) { \
+            ht_fail_cmp_u64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                            "expected " #expected " != " #actual " (u64)"); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Bitmask assertion ─────────────────────────────────────────────── */
+
+#define HT_ASSERT_BITS(mask, expected, actual) \
+    do { \
+        unsigned long _ht_m = (unsigned long)(mask); \
+        unsigned long _ht_e = (unsigned long)(expected) & _ht_m; \
+        unsigned long _ht_a = (unsigned long)(actual) & _ht_m; \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, \
+                        "(" #actual " & " #mask ")", \
+                        (long)_ht_e, (long)_ht_a, \
+                        "bitmask mismatch for mask " #mask); \
+            return HT_TEST_FAILED; \
+        } \
+    } while (0)
+
+/* ── Array assertion (reports index of first difference) ───────────── */
+
+#define HT_ASSERT_ARRAY_EQ(expected, actual, count) \
+    do { \
+        for (size_t _ht_i = 0; _ht_i < (size_t)(count); _ht_i++) { \
+            if ((expected)[_ht_i] != (actual)[_ht_i]) { \
+                ht_fail_cmp(__FILE__, (uint32_t)__LINE__, \
+                            #actual "[" #count "]", \
+                            (long)(expected)[_ht_i], (long)(actual)[_ht_i], \
+                            "array mismatch at index"); \
+                return HT_TEST_FAILED; \
+            } \
         } \
     } while (0)
 
@@ -387,8 +492,9 @@ extern int ht_expect_failure_count;
         double _ht_a = (double)(actual); \
         double _ht_eps = (double)(epsilon); \
         if (fabs(_ht_e - _ht_a) > _ht_eps) { \
-            ht_fail_impl(__FILE__, (uint32_t)__LINE__, \
-                         #actual, "float mismatch: |" #expected " - " #actual "| > " #epsilon); \
+            ht_fail_float(__FILE__, (uint32_t)__LINE__, \
+                          #actual, _ht_e, _ht_a, _ht_eps, \
+                          "float mismatch: |" #expected " - " #actual "| > " #epsilon); \
             ht_expect_failure_count++; \
         } \
     } while (0)
@@ -424,6 +530,82 @@ extern int ht_expect_failure_count;
                         _ht_h ? _ht_h : "(null)", \
                         "string does not contain expected substring"); \
             ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+/* ── 64-bit non-fatal assertions ───────────────────────────────────── */
+
+#define HT_EXPECT_EQ_I64(expected, actual) \
+    do { \
+        int64_t _ht_e = (int64_t)(expected); \
+        int64_t _ht_a = (int64_t)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                          "expected " #expected " == " #actual " (i64)"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_NE_I64(expected, actual) \
+    do { \
+        int64_t _ht_e = (int64_t)(expected); \
+        int64_t _ht_a = (int64_t)(actual); \
+        if (_ht_e == _ht_a) { \
+            ht_fail_cmp64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                          "expected " #expected " != " #actual " (i64)"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_EQ_U64(expected, actual) \
+    do { \
+        uint64_t _ht_e = (uint64_t)(expected); \
+        uint64_t _ht_a = (uint64_t)(actual); \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp_u64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                            "expected " #expected " == " #actual " (u64)"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_NE_U64(expected, actual) \
+    do { \
+        uint64_t _ht_e = (uint64_t)(expected); \
+        uint64_t _ht_a = (uint64_t)(actual); \
+        if (_ht_e == _ht_a) { \
+            ht_fail_cmp_u64(__FILE__, (uint32_t)__LINE__, #actual, _ht_e, _ht_a, \
+                            "expected " #expected " != " #actual " (u64)"); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+/* ── Bitmask / array non-fatal assertions ──────────────────────────── */
+
+#define HT_EXPECT_BITS(mask, expected, actual) \
+    do { \
+        unsigned long _ht_m = (unsigned long)(mask); \
+        unsigned long _ht_e = (unsigned long)(expected) & _ht_m; \
+        unsigned long _ht_a = (unsigned long)(actual) & _ht_m; \
+        if (_ht_e != _ht_a) { \
+            ht_fail_cmp(__FILE__, (uint32_t)__LINE__, \
+                        "(" #actual " & " #mask ")", \
+                        (long)_ht_e, (long)_ht_a, \
+                        "bitmask mismatch for mask " #mask); \
+            ht_expect_failure_count++; \
+        } \
+    } while (0)
+
+#define HT_EXPECT_ARRAY_EQ(expected, actual, count) \
+    do { \
+        for (size_t _ht_i = 0; _ht_i < (size_t)(count); _ht_i++) { \
+            if ((expected)[_ht_i] != (actual)[_ht_i]) { \
+                ht_fail_cmp(__FILE__, (uint32_t)__LINE__, \
+                            #actual "[" #count "]", \
+                            (long)(expected)[_ht_i], (long)(actual)[_ht_i], \
+                            "array mismatch at index"); \
+                ht_expect_failure_count++; \
+                break; \
+            } \
         } \
     } while (0)
 
