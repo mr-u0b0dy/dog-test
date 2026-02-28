@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 dog-test contributors
 from __future__ import annotations
 
 from tools.logic.decoders import decode_by_protocol

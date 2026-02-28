@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright 2026 dog-test contributors */
+
 #include <stdio.h>
 #include <string.h>
 #include "hiltest/test_case.h"

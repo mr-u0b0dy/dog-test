@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright 2026 dog-test contributors */
+
 #ifndef HILTEST_MONITOR_SPEC_H
 #define HILTEST_MONITOR_SPEC_H
 
