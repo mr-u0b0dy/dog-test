@@ -1,5 +1,9 @@
 include(${CMAKE_SOURCE_DIR}/cmake/HilTest.cmake)
 
+# ── Host-side framework tests ──────────────────────────────────────────
+
+add_subdirectory(host)
+
 # ── Per-example HIL tests ──────────────────────────────────────────────
 
 hil_add_runner_test(hil_uart_example

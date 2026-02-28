@@ -16,8 +16,5 @@ target_include_directories(hiltest_core
         ${CMAKE_CURRENT_SOURCE_DIR}/framework/include
 )
 
-add_subdirectory(examples/uart_loopback)
-add_subdirectory(examples/i2c_smoke)
-add_subdirectory(examples/spi_transfer)
+add_subdirectory(examples)
 add_subdirectory(tests)
-add_subdirectory(tests/host)

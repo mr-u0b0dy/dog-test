@@ -1,0 +1,3 @@
+add_subdirectory(uart_loopback)
+add_subdirectory(i2c_smoke)
+add_subdirectory(spi_transfer)
