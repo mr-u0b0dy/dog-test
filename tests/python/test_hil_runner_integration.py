@@ -3,15 +3,10 @@ and extended parse_ht_event_line coverage."""
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-import pytest
-
-from tools.hil_runner import load_test_plan, parse_ht_event_line, write_junit_xml, TestResult
-
+from tools.hil_runner import TestResult, load_test_plan, parse_ht_event_line, write_junit_xml
 
 # ── load_test_plan tests ──────────────────────────────────────────────
 
@@ -126,7 +121,10 @@ class TestWriteJunitXml:
 
 class TestParseHtEventLineExtended:
     def test_fail_event(self):
-        line = 'HT_EVENT fail name=my_test reason=assert file=main.c line=17 expr="x == y" msg="expected x == y" expected=1 actual=2'
+        line = (
+            'HT_EVENT fail name=my_test reason=assert file=main.c line=17 '
+            'expr="x == y" msg="expected x == y" expected=1 actual=2'
+        )
         result = parse_ht_event_line(line)
         assert result["name"] == "my_test"
         assert result["reason"] == "assert"

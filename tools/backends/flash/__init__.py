@@ -3,14 +3,9 @@
 """Flash backend registry — maps backend names to classes."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
-
 from tools.backends.flash.base import FlashBackend
 from tools.backends.flash.openocd_backend import OpenOcdFlashBackend
 from tools.backends.flash.pyocd_backend import PyOcdFlashBackend
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 # ── Registry ───────────────────────────────────────────────────────────
 _FLASH_BACKENDS: dict[str, type[FlashBackend]] = {

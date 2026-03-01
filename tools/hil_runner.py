@@ -6,16 +6,17 @@ optional Saleae logic-analyser monitoring for dog-test integration tests."""
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import os
+import signal as _signal
 import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
 
 try:
     import serial  # type: ignore[import-untyped]
@@ -27,17 +28,21 @@ try:
 except ImportError:
     _saleae_automation = None  # type: ignore[assignment]
 
-# Ensure the project root is importable so 'tools.*' packages resolve whether
-# this module is run as a script or imported from the project root.
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
-
-from tools.backends.flash import get_flash_backend
-from tools.backends.reset import get_reset_backend
-from tools.logic.assertions import evaluate_monitor_expectations
-from tools.logic.saleae_adapter import SaleaeLogicAdapter
-from tools.specs.monitor_contract import MonitorRequest
+try:
+    from tools.backends.flash import get_flash_backend
+    from tools.backends.reset import get_reset_backend
+    from tools.logic.assertions import evaluate_monitor_expectations
+    from tools.logic.saleae_adapter import SaleaeLogicAdapter
+    from tools.specs.monitor_contract import MonitorRequest
+except ModuleNotFoundError:
+    _PROJECT_ROOT = Path(__file__).resolve().parents[1]
+    if str(_PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(_PROJECT_ROOT))
+    from tools.backends.flash import get_flash_backend
+    from tools.backends.reset import get_reset_backend
+    from tools.logic.assertions import evaluate_monitor_expectations
+    from tools.logic.saleae_adapter import SaleaeLogicAdapter
+    from tools.specs.monitor_contract import MonitorRequest
 
 log = logging.getLogger("hil_runner")
 
@@ -49,14 +54,9 @@ def _signal_handler(signum: int, frame: object) -> None:  # noqa: ARG001
     """Graceful shutdown — invoke registered cleanup callbacks."""
     log.warning("caught signal %d, cleaning up…", signum)
     for cb in reversed(_cleanup_callbacks):
-        try:
+        with contextlib.suppress(Exception):
             cb()
-        except Exception:
-            pass
     sys.exit(128 + signum)
-
-
-import signal as _signal
 _signal.signal(_signal.SIGINT, _signal_handler)
 _signal.signal(_signal.SIGTERM, _signal_handler)
 
@@ -67,14 +67,14 @@ _signal.signal(_signal.SIGTERM, _signal_handler)
 class TestExecutionConfig:
     name: str
     firmware: Path
-    board_id: Optional[str]
-    serial_port: Optional[str]
+    board_id: str | None
+    serial_port: str | None
     baudrate: int
     reset_mode: str
     backend: str
-    openocd_interface: Optional[str]
-    openocd_target: Optional[str]
-    monitor: Optional[MonitorRequest]
+    openocd_interface: str | None
+    openocd_target: str | None
+    monitor: MonitorRequest | None
 
 
 @dataclass
@@ -82,7 +82,7 @@ class TestPlanItem:
     name: str
     firmware: Path
     reset_mode: str
-    monitor: Optional[MonitorRequest]
+    monitor: MonitorRequest | None
 
 
 @dataclass
@@ -98,7 +98,10 @@ class TestResult:
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
-def _run_cmd(command: list[str], cwd: Optional[Path] = None) -> subprocess.CompletedProcess[bytes]:
+def _run_cmd(
+    command: list[str],
+    cwd: Path | None = None,
+) -> subprocess.CompletedProcess[bytes]:
     """Run a command, capturing output and raising on failure."""
     result = subprocess.run(command, cwd=cwd, capture_output=True)
     if result.returncode != 0:
@@ -173,7 +176,7 @@ def configure_build(preset: str) -> None:
     _run_cmd(["cmake", "--preset", preset])
 
 
-def build_target(preset: str, target: Optional[str]) -> None:
+def build_target(preset: str, target: str | None) -> None:
     cmd = ["cmake", "--build", "--preset", preset]
     if target:
         cmd.extend(["--target", target])
@@ -224,7 +227,10 @@ def run_target_test(config: TestExecutionConfig) -> tuple[int, list[str]]:
     if serial is None:
         raise RuntimeError("pyserial is required for target execution (pip install pyserial)")
 
-    overall_timeout = max(30.0, (config.monitor.timeout_ms / 1000.0 * 3) if config.monitor else 30.0)
+    overall_timeout = max(
+        30.0,
+        (config.monitor.timeout_ms / 1000.0 * 3) if config.monitor else 30.0,
+    )
     deadline = time.monotonic() + overall_timeout
 
     with serial.Serial(config.serial_port, config.baudrate, timeout=1.0) as ser:
@@ -265,7 +271,10 @@ def run_monitor(config: TestExecutionConfig) -> None:
         return
 
     if _saleae_automation is None:
-        raise RuntimeError("saleae-automation package is required for monitoring (pip install saleae)")
+        raise RuntimeError(
+            "saleae-automation package is required for monitoring "
+            "(pip install saleae)"
+        )
 
     adapter = SaleaeLogicAdapter.from_environment()
     capture = adapter.capture_protocol(
@@ -323,7 +332,12 @@ def execute_single_test(
                 log.info("test %s passed on retry %d", config.name, attempt)
             break
         if attempt <= retries:
-            log.warning("test %s failed (attempt %d/%d), retrying…", config.name, attempt, retries + 1)
+            log.warning(
+                "test %s failed (attempt %d/%d), retrying…",
+                config.name,
+                attempt,
+                retries + 1,
+            )
             time.sleep(0.5)
 
     return last_result
@@ -391,7 +405,12 @@ def run_test_plan(args: argparse.Namespace) -> tuple[int, list[TestResult]]:
         results.append(result)
         failed = 0 if result.status == "passed" else 1
         total_failed += failed
-        log.info("HT_HOST done name=%s status=%s (%.2fs)", item.name, result.status, result.duration_s)
+        log.info(
+            "HT_HOST done name=%s status=%s (%.2fs)",
+            item.name,
+            result.status,
+            result.duration_s,
+        )
 
         if args.reset_between_tests and index < len(test_plan) - 1:
             if args.skip_reset:
@@ -469,8 +488,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--openocd-target", default=os.getenv("HIL_OPENOCD_TARGET"))
     parser.add_argument("--monitor-spec", default=None, help="JSON monitor spec")
     parser.add_argument("--test-plan", default=None, help="JSON file with list of tests")
-    parser.add_argument("--tag", default=None, help="run only tests matching this tag (target-side filtering)")
-    parser.add_argument("--filter", default=None, help="run only tests whose name contains this string (target-side filtering)")
+    parser.add_argument(
+        "--tag",
+        default=None,
+        help="run only tests matching this tag (target-side filtering)",
+    )
+    parser.add_argument(
+        "--filter",
+        default=None,
+        help=(
+            "run only tests whose name contains this string "
+            "(target-side filtering)"
+        ),
+    )
     parser.add_argument("--reset-between-tests", action="store_true")
     parser.add_argument("--skip-flash", action="store_true")
     parser.add_argument("--skip-reset", action="store_true")

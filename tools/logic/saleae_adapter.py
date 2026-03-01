@@ -2,12 +2,12 @@
 # Copyright 2026 dog-test contributors
 from __future__ import annotations
 
+import csv
 import os
 import tempfile
 import time
-from pathlib import Path
-import csv
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -39,7 +39,7 @@ class SaleaeLogicAdapter:
         self.port = port
 
     @classmethod
-    def from_environment(cls) -> "SaleaeLogicAdapter":
+    def from_environment(cls) -> SaleaeLogicAdapter:
         host = os.getenv("SALEAE_HOST", "127.0.0.1")
         port = int(os.getenv("SALEAE_PORT", "10430"))
         return cls(host, port)
@@ -78,7 +78,13 @@ class SaleaeLogicAdapter:
         with file_path.open("r", encoding="utf-8", newline="") as handle:
             return list(csv.DictReader(handle))
 
-    def capture_protocol(self, protocol: str, channels: str, trigger: str, duration_ms: int) -> LogicCapture:
+    def capture_protocol(
+        self,
+        protocol: str,
+        channels: str,
+        trigger: str,
+        duration_ms: int,
+    ) -> LogicCapture:
         try:
             from saleae import automation
         except ImportError as exc:

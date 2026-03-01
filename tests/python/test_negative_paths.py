@@ -9,10 +9,9 @@ from pathlib import Path
 import pytest
 
 from tools.hil_runner import load_test_plan, parse_ht_event_line
-from tools.specs.monitor_contract import MonitorRequest
 from tools.logic.decoders import decode_by_protocol
 from tools.logic.saleae_adapter import LogicCapture
-
+from tools.specs.monitor_contract import MonitorRequest
 
 # ── MonitorRequest validation ──────────────────────────────────────────
 

@@ -1,7 +1,9 @@
 """Unit tests for tools.logic.decoders"""
 from __future__ import annotations
 
-from tools.logic.decoders import decode_uart, decode_i2c, decode_spi, decode_by_protocol
+import pytest
+
+from tools.logic.decoders import decode_by_protocol, decode_i2c, decode_spi, decode_uart
 from tools.logic.saleae_adapter import LogicCapture
 
 
@@ -81,8 +83,5 @@ class TestDecodeByProtocol:
 
     def test_unsupported_raises(self):
         cap = _make_capture("can", [])
-        try:
+        with pytest.raises(ValueError):
             decode_by_protocol(cap)
-            assert False, "should have raised"
-        except ValueError:
-            pass

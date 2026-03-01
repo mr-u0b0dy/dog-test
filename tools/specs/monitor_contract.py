@@ -29,7 +29,7 @@ class MonitorRequest:
             )
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MonitorRequest":
+    def from_dict(cls, data: dict[str, Any]) -> MonitorRequest:
         instance = cls(
             protocol=str(data.get("protocol", "")),
             channels=str(data.get("channels", "")),

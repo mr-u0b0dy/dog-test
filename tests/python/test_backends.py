@@ -8,13 +8,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.backends.flash.pyocd_backend import PyOcdFlashBackend
-from tools.backends.flash.openocd_backend import OpenOcdFlashBackend
-from tools.backends.reset.pyocd_reset import PyOcdResetBackend
-from tools.backends.reset.openocd_reset import OpenOcdResetBackend
 from tools.backends.flash import get_flash_backend, register_flash_backend
+from tools.backends.flash.openocd_backend import OpenOcdFlashBackend
+from tools.backends.flash.pyocd_backend import PyOcdFlashBackend
 from tools.backends.reset import get_reset_backend, register_reset_backend
-
+from tools.backends.reset.openocd_reset import OpenOcdResetBackend
+from tools.backends.reset.pyocd_reset import PyOcdResetBackend
 
 # ── Flash backend tests ───────────────────────────────────────────────
 
