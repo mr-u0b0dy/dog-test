@@ -5,6 +5,7 @@
     "build": "nuxt build --extends docus"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
     "better-sqlite3": "^12.6.2",
     "docus": "latest",
     "ipx": "^3.1.1",
