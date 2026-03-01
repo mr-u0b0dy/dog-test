@@ -15,5 +15,8 @@
     "@nuxtjs/mcp-toolkit": "^0.7.0",
     "node-gyp": "^12.2.0",
     "zod": "^4.3.6"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
   }
 }
