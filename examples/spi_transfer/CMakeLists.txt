@@ -4,5 +4,5 @@ add_executable(spi_transfer
 
 target_link_libraries(spi_transfer
     PRIVATE
-        hiltest_core
+        dogtest_core
 )

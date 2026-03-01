@@ -14,9 +14,9 @@ A toolchain-generic embedded test framework focused on ARM (`arm-none-eabi`) wit
 
 ## Project layout
 
-- `framework/include/hiltest/`: assert macros, test case types, monitor abstractions
+- `framework/include/dogtest/`: assert macros, test case types, monitor abstractions
 - `framework/src/`: test registry and target runner
-- `tools/hil_runner.py`: host-side orchestrator
+- `tools/dt_runner.py`: host-side orchestrator
 - `tools/backends/`: flash/reset adapters (`pyOCD` + OpenOCD)
 - `tools/backends/lang/`: language adapters (Rust placeholder)
 - `tools/logic/`: Saleae capture and protocol assertion modules
@@ -41,7 +41,7 @@ cmake --build --preset host-debug
 ### 3) Run sample via host runner
 
 ```bash
-python3 tools/hil_runner.py \
+python3 tools/dt_runner.py \
   --firmware build/host-debug/examples/uart_loopback/uart_loopback \
   --test-name uart_loopback \
   --serial-port /dev/ttyACM0 \
@@ -51,7 +51,7 @@ python3 tools/hil_runner.py \
 ### 3b) Non-hardware smoke run (IDE/CI wiring check)
 
 ```bash
-python3 tools/hil_runner.py \
+python3 tools/dt_runner.py \
   --firmware build/host-debug/examples/uart_loopback/uart_loopback \
   --skip-flash \
   --skip-reset \
@@ -62,7 +62,7 @@ python3 tools/hil_runner.py \
 ### 4) Use monitor spec
 
 ```bash
-python3 tools/hil_runner.py \
+python3 tools/dt_runner.py \
   --firmware build/host-debug/examples/uart_loopback/uart_loopback \
   --serial-port /dev/ttyACM0 \
   --monitor-spec '{"protocol":"uart","channels":"ch0=tx,ch1=rx","trigger":"start-on-byte:0x55","timeout_ms":1000,"expect":{"protocol":"uart","min_items":1}}'
@@ -73,13 +73,13 @@ python3 tools/hil_runner.py \
 `pyOCD` (default):
 
 ```bash
-python3 tools/hil_runner.py --backend pyocd --firmware build/host-debug/examples/uart_loopback/uart_loopback
+python3 tools/dt_runner.py --backend pyocd --firmware build/host-debug/examples/uart_loopback/uart_loopback
 ```
 
 OpenOCD:
 
 ```bash
-python3 tools/hil_runner.py \
+python3 tools/dt_runner.py \
   --backend openocd \
   --openocd-interface interface/cmsis-dap.cfg \
   --openocd-target target/stm32f4x.cfg \
@@ -89,7 +89,7 @@ python3 tools/hil_runner.py \
 ### 6) Run test plan once with reset between tests
 
 ```bash
-python3 tools/hil_runner.py \
+python3 tools/dt_runner.py \
   --test-plan tests/test_plan_smoke.json \
   --reset-between-tests
 ```
@@ -97,18 +97,18 @@ python3 tools/hil_runner.py \
 ## Writing test cases
 
 ```c
-#include "hiltest/assert.h"
-#include "hiltest/test_case.h"
+#include "dogtest/assert.h"
+#include "dogtest/test_case.h"
 
-static const ht_monitor_spec_t my_monitor = {
+static const dt_monitor_spec_t my_monitor = {
     "uart", "ch0=tx,ch1=rx", "start-on-byte:0x55", 1000
 };
 
-HT_TEST("my_case", HT_RESET_SOFT, &my_monitor, my_case) {
+DT_TEST("my_case", DT_RESET_SOFT, &my_monitor, my_case) {
     int expected = 42;
     int observed = 42;
-    HT_ASSERT_EQ(expected, observed);
-    return HT_TEST_PASSED;
+    DT_ASSERT_EQ(expected, observed);
+    return DT_TEST_PASSED;
 }
 ```
 
@@ -125,10 +125,10 @@ Use tasks:
 
 - `tools/logic/` captures with Saleae Automation API and decodes table-export rows for UART/I2C/SPI.
 - For hardware-less validation, use `--skip-flash --skip-reset --skip-monitor --skip-target-exec`.
-- Rust integration is planned by implementing the same `HT_EVENT` protocol from Rust test binaries.
+- Rust integration is planned by implementing the same `DT_EVENT` protocol from Rust test binaries.
 
 See:
 - [Architecture](docs-site/content/en/4.reference/1.architecture.md)
-- [HIL Workflow](docs-site/content/en/4.reference/3.hil-workflow.md)
+- [Dog Test Workflow](docs-site/content/en/4.reference/3.dt-workflow.md)
 - [Examples](docs-site/content/en/4.reference/2.examples.md)
 - [Rust Roadmap](docs-site/content/en/4.reference/4.rust-roadmap.md)

@@ -17,4 +17,4 @@ class RustAdapter:
         raise NotImplementedError("Rust integration is planned in a future phase")
 
     def event_protocol_name(self) -> str:
-        return "HT_EVENT"
+        return "DT_EVENT"

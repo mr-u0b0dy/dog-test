@@ -62,7 +62,7 @@ Built for embedded verification
   Python [Host Orchestrator]{.text-primary}
 
   #description
-  Flash, reset, capture serial output, and evaluate results with `hil_runner.py`. Supports pyOCD and OpenOCD backends, test plans, retry for flaky tests, and JUnit XML export.
+  Flash, reset, capture serial output, and evaluate results with `dt_runner.py`. Supports pyOCD and OpenOCD backends, test plans, retry for flaky tests, and JUnit XML export.
   :::
 
   :::u-page-feature
@@ -95,7 +95,7 @@ Built for embedded verification
   Test [Tags & Filtering]{.text-primary}
 
   #description
-  Tag tests with `HT_TEST_T` and filter by name or tag at runtime. Run "all UART tests" or "all smoke tests" without naming conventions.
+  Tag tests with `DT_TEST_T` and filter by name or tag at runtime. Run "all UART tests" or "all smoke tests" without naming conventions.
   :::
 
   :::u-page-feature

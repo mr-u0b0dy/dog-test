@@ -1,38 +1,38 @@
-include(${CMAKE_SOURCE_DIR}/cmake/HilTest.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/DogTest.cmake)
 
 # ── Host-side framework tests ──────────────────────────────────────────
 
 add_subdirectory(host)
 
-# ── Per-example HIL tests ──────────────────────────────────────────────
+# ── Per-example dog tests ──────────────────────────────────────────────
 
-hil_add_runner_test(hil_uart_example
+dt_add_runner_test(dt_uart_example
     ${CMAKE_BINARY_DIR}/examples/uart_loopback/uart_loopback
     RESET_MODE none
-    LABELS hil uart
+    LABELS dt uart
     SKIP_FLASH SKIP_RESET SKIP_MONITOR SKIP_TARGET_EXEC
 )
 
-hil_add_runner_test(hil_i2c_example
+dt_add_runner_test(dt_i2c_example
     ${CMAKE_BINARY_DIR}/examples/i2c_smoke/i2c_smoke
     RESET_MODE soft
-    LABELS hil i2c
+    LABELS dt i2c
     SKIP_FLASH SKIP_RESET SKIP_MONITOR SKIP_TARGET_EXEC
 )
 
-hil_add_runner_test(hil_spi_example
+dt_add_runner_test(dt_spi_example
     ${CMAKE_BINARY_DIR}/examples/spi_transfer/spi_transfer
     RESET_MODE hard
-    LABELS hil spi
+    LABELS dt spi
     SKIP_FLASH SKIP_RESET SKIP_MONITOR SKIP_TARGET_EXEC
 )
 
 # ── Test-plan driven smoke test ────────────────────────────────────────
 
-hil_add_plan_test(hil_plan_smoke
+dt_add_plan_test(dt_plan_smoke
     ${CMAKE_SOURCE_DIR}/tests/test_plan_smoke.json
     RESET_BETWEEN_TESTS
-    LABELS hil plan
+    LABELS dt plan
     SKIP_FLASH SKIP_RESET SKIP_MONITOR SKIP_TARGET_EXEC
 )
 

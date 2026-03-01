@@ -1,5 +1,5 @@
 add_executable(test_framework test_framework.c)
-target_link_libraries(test_framework PRIVATE hiltest_core m)
+target_link_libraries(test_framework PRIVATE dogtest_core m)
 
 add_test(
     NAME host_framework_tests

@@ -5,12 +5,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
-#include "hiltest/assert.h"
+#include "dogtest/assert.h"
 
 /* ── Non-fatal expectation counter ─────────────────────────────────── */
-int ht_expect_failure_count = 0;
+int dt_expect_failure_count = 0;
 
-/* ── Skip reason (set by ht_skip_impl, separate from fail state) ──── */
+/* ── Skip reason (set by dt_skip_impl, separate from fail state) ──── */
 static const char* g_skip_reason;
 
 static const char* g_last_file;
@@ -18,17 +18,17 @@ static uint32_t g_last_line;
 static const char* g_last_expr;
 static const char* g_last_message;
 
-/* Comparison failure values (set by ht_fail_cmp). */
+/* Comparison failure values (set by dt_fail_cmp). */
 static int  g_has_cmp_values;
 static long g_cmp_expected;
 static long g_cmp_actual;
 
-/* String comparison failure values (set by ht_fail_str). */
+/* String comparison failure values (set by dt_fail_str). */
 static int  g_has_str_values;
 static const char* g_str_expected;
 static const char* g_str_actual;
 
-void ht_fail_impl(const char* file, uint32_t line, const char* expr, const char* message) {
+void dt_fail_impl(const char* file, uint32_t line, const char* expr, const char* message) {
     g_last_file    = file;
     g_last_line    = line;
     g_last_expr    = expr;
@@ -37,11 +37,11 @@ void ht_fail_impl(const char* file, uint32_t line, const char* expr, const char*
     g_has_str_values = 0;
 }
 
-void ht_skip_impl(const char* reason) {
+void dt_skip_impl(const char* reason) {
     g_skip_reason = reason;
 }
 
-void ht_fail_cmp(const char* file, uint32_t line,
+void dt_fail_cmp(const char* file, uint32_t line,
                  const char* expr,
                  long expected, long actual,
                  const char* message) {
@@ -55,7 +55,7 @@ void ht_fail_cmp(const char* file, uint32_t line,
     g_has_str_values = 0;
 }
 
-void ht_fail_str(const char* file, uint32_t line,
+void dt_fail_str(const char* file, uint32_t line,
                  const char* expr,
                  const char* expected, const char* actual,
                  const char* message) {
@@ -75,7 +75,7 @@ static double g_float_expected;
 static double g_float_actual;
 static double g_float_tolerance;
 
-void ht_fail_float(const char* file, uint32_t line,
+void dt_fail_float(const char* file, uint32_t line,
                    const char* expr,
                    double expected, double actual, double tolerance,
                    const char* message) {
@@ -96,7 +96,7 @@ static int     g_has_cmp64_values;
 static int64_t g_cmp64_expected;
 static int64_t g_cmp64_actual;
 
-void ht_fail_cmp64(const char* file, uint32_t line,
+void dt_fail_cmp64(const char* file, uint32_t line,
                    const char* expr,
                    int64_t expected, int64_t actual,
                    const char* message) {
@@ -116,7 +116,7 @@ static int      g_has_cmp_u64_values;
 static uint64_t g_cmp_u64_expected;
 static uint64_t g_cmp_u64_actual;
 
-void ht_fail_cmp_u64(const char* file, uint32_t line,
+void dt_fail_cmp_u64(const char* file, uint32_t line,
                      const char* expr,
                      uint64_t expected, uint64_t actual,
                      const char* message) {
@@ -133,7 +133,7 @@ void ht_fail_cmp_u64(const char* file, uint32_t line,
     g_cmp_u64_actual     = actual;
 }
 
-/* ── HT_EVENT output helpers ───────────────────────────────────────── */
+/* ── DT_EVENT output helpers ───────────────────────────────────────── */
 
 /** Print a key=value pair, quoting the value if it contains spaces or '='. */
 static void _emit_kv(const char* key, const char* value) {
@@ -161,11 +161,11 @@ static void _emit_kv(const char* key, const char* value) {
     }
 }
 
-void ht_emit_result_start(const ht_test_case_t* test_case) {
+void dt_emit_result_start(const dt_test_case_t* test_case) {
     const char* protocol = (test_case->monitor != 0 && test_case->monitor->protocol != 0)
         ? test_case->monitor->protocol
         : "none";
-    printf("HT_EVENT start");
+    printf("DT_EVENT start");
     _emit_kv("name", test_case->name);
     printf(" reset=%d", (int)test_case->reset_mode);
     _emit_kv("monitor", protocol);
@@ -176,15 +176,15 @@ void ht_emit_result_start(const ht_test_case_t* test_case) {
     fflush(stdout);
 }
 
-void ht_emit_result_pass(const ht_test_case_t* test_case) {
-    printf("HT_EVENT pass");
+void dt_emit_result_pass(const dt_test_case_t* test_case) {
+    printf("DT_EVENT pass");
     _emit_kv("name", test_case->name);
     putchar('\n');
     fflush(stdout);
 }
 
-void ht_emit_result_fail(const ht_test_case_t* test_case, const char* reason) {
-    printf("HT_EVENT fail");
+void dt_emit_result_fail(const dt_test_case_t* test_case, const char* reason) {
+    printf("DT_EVENT fail");
     _emit_kv("name", test_case->name);
     _emit_kv("reason", reason);
     _emit_kv("file", g_last_file);
@@ -214,8 +214,8 @@ void ht_emit_result_fail(const ht_test_case_t* test_case, const char* reason) {
     fflush(stdout);
 }
 
-void ht_emit_result_skip(const ht_test_case_t* test_case, const char* reason) {
-    printf("HT_EVENT skip");
+void dt_emit_result_skip(const dt_test_case_t* test_case, const char* reason) {
+    printf("DT_EVENT skip");
     _emit_kv("name", test_case->name);
     _emit_kv("reason", reason ? reason : g_last_message);
     putchar('\n');
@@ -261,13 +261,13 @@ static int _has_tag(const char* tags, const char* tag) {
  * If @p tag is non-NULL, only tests with matching tags run.
  */
 static int _run_tests_impl(const char* filter, const char* tag) {
-    size_t test_count = ht_registered_test_count();
+    size_t test_count = dt_registered_test_count();
     int failed  = 0;
     int skipped = 0;
     int ran     = 0;
 
     for (size_t i = 0; i < test_count; ++i) {
-        const ht_test_case_t* tc = ht_registered_test_at(i);
+        const dt_test_case_t* tc = dt_registered_test_at(i);
         if (tc == 0 || tc->run == 0) {
             continue;
         }
@@ -283,60 +283,60 @@ static int _run_tests_impl(const char* filter, const char* tag) {
         }
 
         _reset_fail_state();
-        ht_expect_failure_count = 0;
-        ht_emit_result_start(tc);
+        dt_expect_failure_count = 0;
+        dt_emit_result_start(tc);
 
         /* Setup fixture. */
         if (tc->setup != 0 && tc->setup() != 0) {
-            ht_emit_result_fail(tc, "setup");
+            dt_emit_result_fail(tc, "setup");
             failed++;
             ran++;
             continue;
         }
 
-        ht_test_result_t result = tc->run();
+        dt_test_result_t result = tc->run();
 
         /* Teardown fixture (always runs, even on failure). */
         if (tc->teardown != 0) {
             tc->teardown();
         }
 
-        /* Promote to failure if any HT_EXPECT_* checks failed. */
-        if (result == HT_TEST_PASSED && ht_expect_failure_count > 0) {
-            result = HT_TEST_FAILED;
+        /* Promote to failure if any DT_EXPECT_* checks failed. */
+        if (result == DT_TEST_PASSED && dt_expect_failure_count > 0) {
+            result = DT_TEST_FAILED;
         }
 
         switch (result) {
-            case HT_TEST_PASSED:
-                ht_emit_result_pass(tc);
+            case DT_TEST_PASSED:
+                dt_emit_result_pass(tc);
                 break;
-            case HT_TEST_SKIPPED:
-                ht_emit_result_skip(tc, g_skip_reason);
+            case DT_TEST_SKIPPED:
+                dt_emit_result_skip(tc, g_skip_reason);
                 skipped++;
                 break;
-            case HT_TEST_FAILED:
+            case DT_TEST_FAILED:
             default:
-                ht_emit_result_fail(tc, "assert");
+                dt_emit_result_fail(tc, "assert");
                 failed++;
                 break;
         }
         ran++;
     }
 
-    printf("HT_EVENT summary total=%d passed=%d failed=%d skipped=%d\n",
+    printf("DT_EVENT summary total=%d passed=%d failed=%d skipped=%d\n",
            ran, ran - failed - skipped, failed, skipped);
     fflush(stdout);
     return failed;
 }
 
-int ht_run_all_tests(void) {
+int dt_run_all_tests(void) {
     return _run_tests_impl((const char*)0, (const char*)0);
 }
 
-int ht_run_tests_filtered(const char* filter) {
+int dt_run_tests_filtered(const char* filter) {
     return _run_tests_impl(filter, (const char*)0);
 }
 
-int ht_run_tests_by_tag(const char* tag) {
+int dt_run_tests_by_tag(const char* tag) {
     return _run_tests_impl((const char*)0, tag);
 }

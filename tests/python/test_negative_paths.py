@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.hil_runner import load_test_plan, parse_ht_event_line
+from tools.dt_runner import load_test_plan, parse_dt_event_line
 from tools.logic.decoders import decode_by_protocol
 from tools.logic.saleae_adapter import LogicCapture
 from tools.specs.monitor_contract import MonitorRequest
@@ -83,24 +83,24 @@ class TestLoadTestPlanErrors:
             load_test_plan(str(plan_file))
 
 
-# ── parse_ht_event_line edge cases ────────────────────────────────────
+# ── parse_dt_event_line edge cases ────────────────────────────────────
 
 
 class TestParseEdgeCases:
     def test_completely_empty_string(self):
-        result = parse_ht_event_line("")
+        result = parse_dt_event_line("")
         assert result == {}
 
     def test_only_event_type(self):
-        result = parse_ht_event_line("HT_EVENT boot")
+        result = parse_dt_event_line("DT_EVENT boot")
         assert result == {}
 
     def test_malformed_no_equals(self):
-        result = parse_ht_event_line("HT_EVENT summary no_equals_here")
+        result = parse_dt_event_line("DT_EVENT summary no_equals_here")
         assert result == {}
 
     def test_unterminated_quote(self):
-        result = parse_ht_event_line('HT_EVENT fail name="unterminated')
+        result = parse_dt_event_line('DT_EVENT fail name="unterminated')
         assert result.get("name") == "unterminated"
 
 

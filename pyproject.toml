@@ -6,7 +6,7 @@ requires = ["setuptools>=68.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dog-test-hil"
+name = "dog-test"
 version = "0.1.0"
 description = "Hardware-in-the-loop test framework for embedded C/C++ systems"
 readme = "README.md"
@@ -40,11 +40,11 @@ dev = [
     "ruff>=0.4",
 ]
 all = [
-    "dog-test-hil[pyocd,saleae,dev]",
+    "dog-test[pyocd,saleae,dev]",
 ]
 
 [project.scripts]
-hil-runner = "tools.hil_runner:main"
+dt-runner = "tools.dt_runner:main"
 
 [project.urls]
 Homepage = "https://dog-test-one.vercel.app/"

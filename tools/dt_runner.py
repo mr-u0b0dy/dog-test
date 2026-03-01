@@ -120,14 +120,14 @@ def _run_cmd(
     return result
 
 
-def parse_ht_event_line(line: str) -> dict[str, str]:
-    """Parse an HT_EVENT key=value line into a dict.
+def parse_dt_event_line(line: str) -> dict[str, str]:
+    """Parse an DT_EVENT key=value line into a dict.
 
     Handles quoted values (e.g. key="value with spaces") safely.
     """
     parts: dict[str, str] = {}
     rest = line
-    # strip the "HT_EVENT <type>" prefix
+    # strip the "DT_EVENT <type>" prefix
     tokens = rest.split(None, 2)
     if len(tokens) < 2:
         return parts
@@ -257,7 +257,7 @@ def run_target_test(config: TestExecutionConfig) -> tuple[int, list[str]]:
                 continue
             log.info(line)
             lines.append(line)
-            if line.startswith("HT_EVENT summary"):
+            if line.startswith("DT_EVENT summary"):
                 break
         else:
             log.error("serial read timed out after %.0fs without summary event", overall_timeout)
@@ -265,9 +265,9 @@ def run_target_test(config: TestExecutionConfig) -> tuple[int, list[str]]:
 
     failed = 0
     for line in lines:
-        if line.startswith("HT_EVENT summary"):
+        if line.startswith("DT_EVENT summary"):
             try:
-                parts = parse_ht_event_line(line)
+                parts = parse_dt_event_line(line)
                 failed = int(parts.get("failed", "1"))
             except (ValueError, KeyError) as exc:
                 log.error("failed to parse summary line %r: %s", line, exc)
@@ -398,7 +398,7 @@ def run_test_plan(args: argparse.Namespace) -> tuple[int, list[TestResult]]:
     total_failed = 0
 
     for index, item in enumerate(test_plan):
-        log.info("HT_HOST start name=%s", item.name)
+        log.info("DT_HOST start name=%s", item.name)
         config = TestExecutionConfig(
             name=item.name,
             firmware=item.firmware,
@@ -416,7 +416,7 @@ def run_test_plan(args: argparse.Namespace) -> tuple[int, list[TestResult]]:
         failed = 0 if result.status == "passed" else 1
         total_failed += failed
         log.info(
-            "HT_HOST done name=%s status=%s (%.2fs)",
+            "DT_HOST done name=%s status=%s (%.2fs)",
             item.name,
             result.status,
             result.duration_s,
@@ -440,7 +440,7 @@ def run_test_plan(args: argparse.Namespace) -> tuple[int, list[TestResult]]:
             apply_reset(inter_test_reset)
             time.sleep(0.1)
 
-    log.info("HT_HOST summary total=%d failed=%d", len(test_plan), total_failed)
+    log.info("DT_HOST summary total=%d failed=%d", len(test_plan), total_failed)
     return (0 if total_failed == 0 else 1, results)
 
 

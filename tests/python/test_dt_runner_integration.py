@@ -1,12 +1,12 @@
 """Integration tests for hil_runner helpers: load_test_plan, write_junit_xml,
-and extended parse_ht_event_line coverage."""
+and extended parse_dt_event_line coverage."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from tools.hil_runner import TestResult, load_test_plan, parse_ht_event_line, write_junit_xml
+from tools.dt_runner import TestResult, load_test_plan, parse_dt_event_line, write_junit_xml
 
 # ── load_test_plan tests ──────────────────────────────────────────────
 
@@ -116,16 +116,16 @@ class TestWriteJunitXml:
         assert root.attrib["tests"] == "0"
 
 
-# ── Extended parse_ht_event_line coverage ─────────────────────────────
+# ── Extended parse_dt_event_line coverage ─────────────────────────────
 
 
 class TestParseHtEventLineExtended:
     def test_fail_event(self):
         line = (
-            'HT_EVENT fail name=my_test reason=assert file=main.c line=17 '
+            'DT_EVENT fail name=my_test reason=assert file=main.c line=17 '
             'expr="x == y" msg="expected x == y" expected=1 actual=2'
         )
-        result = parse_ht_event_line(line)
+        result = parse_dt_event_line(line)
         assert result["name"] == "my_test"
         assert result["reason"] == "assert"
         assert result["file"] == "main.c"
@@ -135,21 +135,21 @@ class TestParseHtEventLineExtended:
         assert result["actual"] == "2"
 
     def test_skip_event(self):
-        line = 'HT_EVENT skip name=cond_test reason="hardware not connected"'
-        result = parse_ht_event_line(line)
+        line = 'DT_EVENT skip name=cond_test reason="hardware not connected"'
+        result = parse_dt_event_line(line)
         assert result["name"] == "cond_test"
         assert result["reason"] == "hardware not connected"
 
     def test_start_event_with_tags(self):
-        line = 'HT_EVENT start name=tagged_uart reset=1 monitor=none tags="uart,smoke"'
-        result = parse_ht_event_line(line)
+        line = 'DT_EVENT start name=tagged_uart reset=1 monitor=none tags="uart,smoke"'
+        result = parse_dt_event_line(line)
         assert result["name"] == "tagged_uart"
         assert result["reset"] == "1"
         assert result["monitor"] == "none"
         assert result["tags"] == "uart,smoke"
 
     def test_start_event_without_tags(self):
-        line = "HT_EVENT start name=basic reset=0 monitor=none"
-        result = parse_ht_event_line(line)
+        line = "DT_EVENT start name=basic reset=0 monitor=none"
+        result = parse_dt_event_line(line)
         assert result["name"] == "basic"
         assert "tags" not in result

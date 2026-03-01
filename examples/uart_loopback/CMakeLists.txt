@@ -4,5 +4,5 @@ add_executable(uart_loopback
 
 target_link_libraries(uart_loopback
     PRIVATE
-        hiltest_core
+        dogtest_core
 )

@@ -51,7 +51,7 @@ python -m pytest tests/python/ -v
 ### C
 
 - C11 standard, `-Wall -Wextra -Wpedantic` clean.
-- Use `HT_` prefix for all public macros and `ht_` for functions.
+- Use `DT_` prefix for all public macros and `dt_` for functions.
 - Include the SPDX license header at the top of every new file:
   ```c
   /* SPDX-License-Identifier: Apache-2.0 */
@@ -74,7 +74,7 @@ python -m pytest tests/python/ -v
 Follow the [Conventional Commits](https://www.conventionalcommits.org/) style:
 
 ```
-feat: add HT_ASSERT_ARRAY_EQ macro
+feat: add DT_ASSERT_ARRAY_EQ macro
 fix: correct float comparison tolerance in runner
 docs: update Python API reference
 test: add backend mock tests

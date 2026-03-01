@@ -40,7 +40,7 @@ export default defineNuxtConfig({
           },
           {
             title: 'Writing Your First Test',
-            description: 'Step-by-step guide to your first HIL test.',
+            description: 'Step-by-step guide to your first dog test.',
             href: '/en/getting-started/first-test',
           },
         ],
@@ -60,9 +60,9 @@ export default defineNuxtConfig({
             href: '/en/reference/examples',
           },
           {
-            title: 'HIL Workflow',
-            description: 'Full CLI reference for hil_runner.py.',
-            href: '/en/reference/hil-workflow',
+            title: 'Dog Test Workflow',
+            description: 'Full CLI reference for dt_runner.py.',
+            href: '/en/reference/dt-workflow',
           },
           {
             title: 'C API Reference',
