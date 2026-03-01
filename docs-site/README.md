@@ -33,6 +33,8 @@ Your multilingual documentation site will be running at `http://localhost:3000`
 This starter comes pre-configured with:
 - 🇺🇸 **English** (`en`) - Default language
 - 🇫🇷 **Français** (`fr`) - French translation
+- 🇷🇺 **Русский** (`ru`) - Russian
+- 🇯🇵 **日本語** (`ja`) - Japanese
 
 ## 📁 Project Structure
 
@@ -80,6 +82,9 @@ The i18n starter generates URLs with language prefixes:
 
 - English: `/en/getting-started/installation`
 - French: `/fr/getting-started/installation`
+- Japanese: `/ja/getting-started/installation`
+- Russian: `/ru/getting-started/installation`
+- Chinese (Simplified): `/zh/getting-started/installation`
 - Default locale fallback: `/getting-started/installation` (redirects to English)
 
 ## ⚡ Built with

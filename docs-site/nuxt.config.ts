@@ -8,6 +8,12 @@ export default defineNuxtConfig({
     }, {
       code: 'fr',
       name: 'Français',
+    }, {
+      code: 'ru',
+      name: 'Русский',
+    }, {
+      code: 'ja',
+      name: '日本語',
     }],
   },
   mcp: {

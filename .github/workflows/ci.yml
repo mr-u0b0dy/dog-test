@@ -7,6 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  docs-translation-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install docs-site dependencies
+        working-directory: docs-site
+        run: npm ci
+
+      - name: Check docs translations
+        working-directory: docs-site
+        run: npm run check:translations
+
   host-tests:
     runs-on: ubuntu-latest
     strategy:

@@ -2,7 +2,8 @@
   "name": "docs-site",
   "scripts": {
     "dev": "nuxt dev --extends docus",
-    "build": "nuxt build --extends docus"
+    "build": "nuxt build --extends docus",
+    "check:translations": "node scripts/check-translations.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",
