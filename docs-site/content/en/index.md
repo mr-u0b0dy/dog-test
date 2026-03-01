@@ -31,7 +31,7 @@ with Saleae — all from a single test plan.
   color: neutral
   icon: simple-icons-github
   size: xl
-  to: https://github.com/your-org/dog-test
+  to: https://github.com/mr-u0b0dy/dog-test
   variant: outline
   ---
   View on GitHub

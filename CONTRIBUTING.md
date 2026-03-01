@@ -16,7 +16,7 @@ development workflow, coding conventions, and how to submit changes.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/dog-test.git
+git clone https://github.com/mr-u0b0dy/dog-test.git
 cd dog-test
 
 # Install Python dependencies (dev extras include linting & coverage)

@@ -18,7 +18,6 @@ authors = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -48,13 +47,15 @@ all = [
 hil-runner = "tools.hil_runner:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/dog-test"
-Documentation = "https://github.com/your-org/dog-test#readme"
-Repository = "https://github.com/your-org/dog-test"
-Issues = "https://github.com/your-org/dog-test/issues"
+Homepage = "https://dog-test-one.vercel.app/"
+Documentation = "https://dog-test-one.vercel.app/en/getting-started/introduction"
+Repository = "https://github.com/mr-u0b0dy/dog-test"
+Issues = "https://github.com/mr-u0b0dy/dog-test/issues"
 
 [tool.setuptools.packages.find]
 include = ["tools*"]
+
+[tool.setuptools_scm]
 
 [tool.ruff]
 target-version = "py310"
