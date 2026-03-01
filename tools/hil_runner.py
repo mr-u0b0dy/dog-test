@@ -17,6 +17,7 @@ import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable, cast
 
 try:
     import serial  # type: ignore[import-untyped]
@@ -30,7 +31,9 @@ except ImportError:
 
 try:
     from tools.backends.flash import get_flash_backend
+    from tools.backends.flash.base import FlashBackend
     from tools.backends.reset import get_reset_backend
+    from tools.backends.reset.base import ResetBackend
     from tools.logic.assertions import evaluate_monitor_expectations
     from tools.logic.saleae_adapter import SaleaeLogicAdapter
     from tools.specs.monitor_contract import MonitorRequest
@@ -39,7 +42,9 @@ except ModuleNotFoundError:
     if str(_PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(_PROJECT_ROOT))
     from tools.backends.flash import get_flash_backend
+    from tools.backends.flash.base import FlashBackend
     from tools.backends.reset import get_reset_backend
+    from tools.backends.reset.base import ResetBackend
     from tools.logic.assertions import evaluate_monitor_expectations
     from tools.logic.saleae_adapter import SaleaeLogicAdapter
     from tools.specs.monitor_contract import MonitorRequest
@@ -185,20 +190,24 @@ def build_target(preset: str, target: str | None) -> None:
 
 # ── Flash / Reset / Serial / Monitor ──────────────────────────────────
 
-def _make_flash_backend(config: TestExecutionConfig):
+def _make_flash_backend(config: TestExecutionConfig) -> FlashBackend:
     """Instantiate a flash backend from registry."""
     cls = get_flash_backend(config.backend)
     if config.backend == "openocd":
-        return cls(config.openocd_interface, config.openocd_target)
-    return cls(config.board_id)
+        openocd_factory = cast(Callable[[str | None, str | None], FlashBackend], cls)
+        return openocd_factory(config.openocd_interface, config.openocd_target)
+    pyocd_factory = cast(Callable[[str | None], FlashBackend], cls)
+    return pyocd_factory(config.board_id)
 
 
-def _make_reset_backend(config: TestExecutionConfig):
+def _make_reset_backend(config: TestExecutionConfig) -> ResetBackend:
     """Instantiate a reset backend from registry."""
     cls = get_reset_backend(config.backend)
     if config.backend == "openocd":
-        return cls(config.openocd_interface, config.openocd_target)
-    return cls(config.board_id)
+        openocd_factory = cast(Callable[[str | None, str | None], ResetBackend], cls)
+        return openocd_factory(config.openocd_interface, config.openocd_target)
+    pyocd_factory = cast(Callable[[str | None], ResetBackend], cls)
+    return pyocd_factory(config.board_id)
 
 
 def flash_firmware(config: TestExecutionConfig) -> None:
