@@ -6,7 +6,7 @@
     "check:translations": "node scripts/check-translations.mjs"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.1",
     "better-sqlite3": "^12.6.2",
     "docus": "latest",
     "ipx": "^3.1.1",
