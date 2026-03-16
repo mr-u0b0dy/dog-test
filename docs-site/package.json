@@ -10,7 +10,7 @@
     "better-sqlite3": "^12.6.2",
     "docus": "latest",
     "ipx": "^3.1.1",
-    "nuxt": "^4.3.1",
+    "nuxt": "^4.4.2",
     "nuxt-llms": "^0.2.0"
   },
   "devDependencies": {
