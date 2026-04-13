@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pyocd = ["pyocd>=0.36"]
+pyocd = ["pyocd>=0.44.0"]
 saleae = ["saleae>=1.0"]
 dev = [
     "pytest>=7.0",
