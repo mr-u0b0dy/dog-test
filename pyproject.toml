@@ -36,7 +36,7 @@ saleae = ["saleae>=1.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
-    "mypy>=1.0",
+    "mypy>=1.20.1",
     "ruff>=0.4",
 ]
 all = [
