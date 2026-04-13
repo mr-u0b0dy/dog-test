@@ -34,7 +34,7 @@ dependencies = [
 pyocd = ["pyocd>=0.36"]
 saleae = ["saleae>=1.0"]
 dev = [
-    "pytest>=7.0",
+    "pytest>=9.0.3",
     "pytest-cov>=4.0",
     "mypy>=1.0",
     "ruff>=0.4",
